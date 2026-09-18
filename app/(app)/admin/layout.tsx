@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/auth/get-current-profile";
+import { AdminNav } from "@/components/admin/AdminNav";
 
 /**
  * Redireciona para /dashboard qualquer usuário autenticado cujo papel não
@@ -14,5 +15,10 @@ export default async function AdminLayout({
 }) {
   await requireAdmin();
 
-  return <div className="space-y-6">{children}</div>;
+  return (
+    <div className="space-y-6">
+      <AdminNav />
+      {children}
+    </div>
+  );
 }
