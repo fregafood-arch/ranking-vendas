@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { PeriodPicker } from "@/components/goals/PeriodPicker";
+import { PeriodPicker } from "@/components/shared/PeriodPicker";
 import { TeamGoalsForm } from "@/components/goals/TeamGoalsForm";
 
 export default async function AdminGoalsPage({
@@ -51,7 +51,7 @@ export default async function AdminGoalsPage({
     <div className="space-y-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-xl font-semibold text-neutral-50">Metas</h1>
-        <PeriodPicker periods={periods} selectedId={periodId} />
+        <PeriodPicker periods={periods} selectedId={periodId} basePath="/admin/metas" />
       </div>
 
       {!indicators?.length ? (
