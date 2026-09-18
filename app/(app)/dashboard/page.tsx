@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
-import { getGeneralRanking } from "@/lib/ranking/scoring";
+import { getGeneralRanking, getIndicatorAttainment } from "@/lib/ranking/scoring";
 import { PeriodPicker } from "@/components/shared/PeriodPicker";
 import { StatTile } from "@/components/dashboard/StatTile";
+import { HighlightCard } from "@/components/dashboard/HighlightCard";
 import { formatIndicatorValue } from "@/lib/format";
 
 export default async function DashboardPage({
@@ -14,7 +15,7 @@ export default async function DashboardPage({
 
   const { data: periods } = await supabase
     .from("periods")
-    .select("id, label, is_active, start_date, end_date")
+    .select("id, type, label, is_active, start_date, end_date")
     .order("start_date", { ascending: false });
 
   if (!periods?.length) {
@@ -30,25 +31,35 @@ export default async function DashboardPage({
   const periodId = periodIdParam ?? defaultPeriodId;
   const period = periods.find((candidate) => candidate.id === periodId) ?? periods[0];
 
-  const [{ data: indicators }, { data: teamGoals }, { data: periodResults }, ranking, { data: sellers }] =
-    await Promise.all([
-      supabase.from("indicators").select("id, name, unit").eq("is_active", true).order("name"),
-      supabase
-        .from("team_goals")
-        .select("indicator_id, target_value")
-        .is("team_id", null)
-        .eq("period_id", periodId),
-      supabase
-        .from("sales_results")
-        .select("indicator_id, value")
-        .gte("entry_date", period.start_date)
-        .lte("entry_date", period.end_date),
-      getGeneralRanking(periodId),
-      supabase.from("sellers").select("id, full_name"),
-    ]);
+  const [
+    { data: indicators },
+    { data: teamGoals },
+    { data: periodResults },
+    ranking,
+    attainment,
+    { data: sellers },
+  ] = await Promise.all([
+    supabase.from("indicators").select("id, name, unit").eq("is_active", true).order("name"),
+    supabase
+      .from("team_goals")
+      .select("indicator_id, target_value")
+      .is("team_id", null)
+      .eq("period_id", periodId),
+    supabase
+      .from("sales_results")
+      .select("indicator_id, value")
+      .gte("entry_date", period.start_date)
+      .lte("entry_date", period.end_date),
+    getGeneralRanking(periodId),
+    getIndicatorAttainment(periodId),
+    supabase.from("sellers").select("id, full_name"),
+  ]);
 
   const indicatorById = new Map((indicators ?? []).map((indicator) => [indicator.id, indicator]));
   const sellerById = new Map((sellers ?? []).map((seller) => [seller.id, seller]));
+  const attainmentByKey = new Map(
+    attainment.map((row) => [`${row.seller_id}:${row.indicator_id}`, row]),
+  );
 
   const totalsByIndicator = new Map<string, number>();
   for (const result of periodResults ?? []) {
@@ -72,6 +83,132 @@ export default async function DashboardPage({
   today.setHours(0, 0, 0, 0);
   const endDate = new Date(`${period.end_date}T00:00:00`);
   const daysRemaining = Math.max(0, Math.round((endDate.getTime() - today.getTime()) / 86_400_000));
+
+  // ------------------------------------------------------------------------
+  // Destaques automáticos (item 12 do briefing) — sempre calculados a
+  // partir dos dados já carregados, nunca gravados em tabela: são um
+  // retrato do momento, recalculados a cada carregamento da tela.
+  // ------------------------------------------------------------------------
+  const nameOf = (sellerId: string) => sellerById.get(sellerId)?.full_name ?? null;
+
+  const topAttainmentRow = [...rankedSellers].sort(
+    (a, b) => (b.primary_attainment_pct ?? 0) - (a.primary_attainment_pct ?? 0),
+  )[0];
+
+  const closestToGoalRow = [...rankedSellers]
+    .filter((row) => (row.primary_attainment_pct ?? 0) < 100)
+    .sort((a, b) => (b.primary_attainment_pct ?? 0) - (a.primary_attainment_pct ?? 0))[0];
+
+  const mostRecentlyExceededRow = [...rankedSellers]
+    .filter((row) => (row.primary_attainment_pct ?? 0) >= 100 && row.primary_first_hit_date)
+    .sort((a, b) => (b.primary_first_hit_date ?? "").localeCompare(a.primary_first_hit_date ?? ""))[0];
+
+  const topVolumeEntry = rankedSellers
+    .map((row) => {
+      const primaryAttainment = row.primary_indicator_id
+        ? attainmentByKey.get(`${row.seller_id}:${row.primary_indicator_id}`)
+        : undefined;
+      return { row, actualValue: primaryAttainment?.actual_value ?? 0 };
+    })
+    .sort((a, b) => b.actualValue - a.actualValue)[0];
+
+  function primaryValueLabel(sellerId: string, indicatorId: string | null) {
+    if (!indicatorId) return null;
+    const indicator = indicatorById.get(indicatorId);
+    const value = attainmentByKey.get(`${sellerId}:${indicatorId}`);
+    if (!indicator || !value) return null;
+    return formatIndicatorValue(value.actual_value, indicator.unit);
+  }
+
+  // 🔥 Maior crescimento: compara com o período anterior do mesmo tipo.
+  const { data: previousPeriods } = await supabase
+    .from("periods")
+    .select("id, label")
+    .eq("type", period.type)
+    .lt("start_date", period.start_date)
+    .order("start_date", { ascending: false })
+    .limit(1);
+  const previousPeriod = previousPeriods?.[0] ?? null;
+
+  let growthCard = { icon: "🔥", title: "Maior crescimento", sellerName: null as string | null, value: null as string | null };
+  if (previousPeriod) {
+    const previousRanking = await getGeneralRanking(previousPeriod.id);
+    const previousScoreBySeller = new Map(
+      previousRanking.map((row) => [row.seller_id, row.general_score ?? 0]),
+    );
+    const best = rankedSellers
+      .filter((row) => previousScoreBySeller.has(row.seller_id))
+      .map((row) => ({
+        sellerId: row.seller_id,
+        growth: (row.general_score ?? 0) - (previousScoreBySeller.get(row.seller_id) ?? 0),
+      }))
+      .sort((a, b) => b.growth - a.growth)[0];
+
+    if (best && best.growth > 0) {
+      growthCard = {
+        icon: "🔥",
+        title: "Maior crescimento",
+        sellerName: nameOf(best.sellerId),
+        value: `+${best.growth.toFixed(1)} pts vs ${previousPeriod.label}`,
+      };
+    }
+  }
+
+  // ⭐ Melhor desempenho da semana: período do tipo Semanal mais recente.
+  const { data: weeklyPeriods } = await supabase
+    .from("periods")
+    .select("id, label")
+    .eq("type", "WEEKLY")
+    .order("start_date", { ascending: false })
+    .limit(1);
+  const weeklyPeriod = weeklyPeriods?.[0] ?? null;
+
+  let weeklyCard = { icon: "⭐", title: "Melhor desempenho da semana", sellerName: null as string | null, value: null as string | null };
+  if (weeklyPeriod) {
+    const weeklyRanking = await getGeneralRanking(weeklyPeriod.id);
+    const best = [...weeklyRanking].sort((a, b) => a.rank_position - b.rank_position)[0];
+    if (best) {
+      weeklyCard = {
+        icon: "⭐",
+        title: "Melhor desempenho da semana",
+        sellerName: nameOf(best.seller_id),
+        value: weeklyPeriod.label,
+      };
+    }
+  }
+
+  const highlights = [
+    growthCard,
+    {
+      icon: "🚀",
+      title: "Mais próximo da meta",
+      sellerName: closestToGoalRow ? nameOf(closestToGoalRow.seller_id) : null,
+      value: closestToGoalRow ? `${(closestToGoalRow.primary_attainment_pct ?? 0).toFixed(0)}% da meta` : null,
+    },
+    {
+      icon: "🏆",
+      title: "Meta superada",
+      sellerName: mostRecentlyExceededRow ? nameOf(mostRecentlyExceededRow.seller_id) : null,
+      value: mostRecentlyExceededRow
+        ? `${(mostRecentlyExceededRow.primary_attainment_pct ?? 0).toFixed(0)}% da meta`
+        : null,
+    },
+    weeklyCard,
+    {
+      icon: "🎯",
+      title: "Maior percentual da meta",
+      sellerName: topAttainmentRow ? nameOf(topAttainmentRow.seller_id) : null,
+      value: topAttainmentRow ? `${(topAttainmentRow.primary_attainment_pct ?? 0).toFixed(0)}% da meta` : null,
+    },
+    {
+      icon: "💰",
+      title: "Maior volume vendido",
+      sellerName: topVolumeEntry ? nameOf(topVolumeEntry.row.seller_id) : null,
+      value: topVolumeEntry
+        ? primaryValueLabel(topVolumeEntry.row.seller_id, topVolumeEntry.row.primary_indicator_id)
+        : null,
+    },
+  ];
 
   return (
     <div className="space-y-10">
@@ -129,6 +266,15 @@ export default async function DashboardPage({
           </div>
         </section>
       )}
+
+      <section className="space-y-4">
+        <h2 className="text-lg font-medium text-neutral-100">Destaques</h2>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          {highlights.map((highlight) => (
+            <HighlightCard key={highlight.title} {...highlight} />
+          ))}
+        </div>
+      </section>
 
       <section className="space-y-4">
         <h2 className="text-lg font-medium text-neutral-100">Resumo da equipe</h2>
