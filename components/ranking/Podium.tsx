@@ -43,9 +43,19 @@ function PodiumColumn({
     ? { 1: "h-40", 2: "h-28", 3: "h-20" }[rank]
     : { 1: "h-28", 2: "h-20", 3: "h-14" }[rank];
   const avatarSize = large ? (rank === 1 ? 160 : 112) : rank === 1 ? 88 : 64;
+  // 2º e 3º sobem primeiro, o 1º por último — efeito de "anúncio do
+  // resultado" em vez de tudo aparecer de uma vez.
+  const riseDelayMs = { 1: 300, 2: 0, 3: 150 }[rank];
 
   return (
-    <div className={large ? "flex w-48 flex-col items-center gap-3 sm:w-56" : "flex w-28 flex-col items-center gap-2 sm:w-36"}>
+    <div
+      className={
+        large
+          ? "flex w-48 origin-bottom flex-col items-center gap-3 opacity-0 sm:w-56"
+          : "flex w-28 origin-bottom flex-col items-center gap-2 opacity-0 sm:w-36"
+      }
+      style={{ animation: `podium-rise 0.7s ease-out ${riseDelayMs}ms both` }}
+    >
       <span className={large ? "text-5xl" : "text-2xl"}>{style.medal}</span>
       <Link href={profileHref ?? "#"} className={`rounded-full ring-4 ${style.ring}`}>
         <SellerAvatar photoPath={entry.photoPath} name={entry.name} size={avatarSize} />
