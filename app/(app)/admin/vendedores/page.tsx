@@ -15,6 +15,12 @@ export default async function AdminSellersPage({
     .from("sellers")
     .select("id, full_name, role_title, start_date, is_active, photo_path, teams(name)")
     .order("full_name");
+  // supabase-js tipa relações embutidas como array por padrão (não temos
+  // Database types gerados); em runtime, uma relação many-to-one (FK na
+  // própria tabela, como sellers.team_id) sempre vem como objeto único.
+  type SellerRow = NonNullable<typeof sellers>[number];
+  type SellerWithTeam = Omit<SellerRow, "teams"> & { teams: { name: string } | null };
+  const sellerRows = (sellers ?? []) as unknown as SellerWithTeam[];
 
   return (
     <div className="space-y-6">
@@ -49,14 +55,14 @@ export default async function AdminSellersPage({
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-800">
-            {sellers?.map((seller) => (
+            {sellerRows.map((seller) => (
               <tr key={seller.id} className="text-neutral-200">
                 <td className="px-4 py-3">
                   <SellerAvatar photoPath={seller.photo_path} name={seller.full_name} size={36} />
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">{seller.full_name}</td>
                 <td className="px-4 py-3 text-neutral-400">{seller.role_title ?? "—"}</td>
-                <td className="px-4 py-3 text-neutral-400">{seller.teams?.[0]?.name ?? "—"}</td>
+                <td className="px-4 py-3 text-neutral-400">{seller.teams?.name ?? "—"}</td>
                 <td className="px-4 py-3 whitespace-nowrap text-neutral-400">
                   {new Date(`${seller.start_date}T00:00:00`).toLocaleDateString("pt-BR")}
                 </td>
@@ -84,7 +90,7 @@ export default async function AdminSellersPage({
                 </td>
               </tr>
             ))}
-            {!sellers?.length && (
+            {!sellerRows.length && (
               <tr>
                 <td colSpan={7} className="px-4 py-6 text-center text-neutral-500">
                   Nenhum vendedor cadastrado ainda.
