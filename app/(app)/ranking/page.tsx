@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getGeneralRanking, getIndicatorAttainment } from "@/lib/ranking/scoring";
 import { PeriodPicker } from "@/components/shared/PeriodPicker";
 import { IndicatorFilterTabs } from "@/components/ranking/IndicatorFilterTabs";
+import { Podium } from "@/components/ranking/Podium";
 import { ProgressBar } from "@/components/ranking/ProgressBar";
 import { SellerAvatar } from "@/components/sellers/SellerAvatar";
 import { formatIndicatorValue } from "@/lib/format";
@@ -87,55 +88,66 @@ export default async function RankingPage({
 
       <IndicatorFilterTabs indicators={indicators ?? []} activeIndicatorId={null} periodId={periodId} />
 
-      <div className="overflow-x-auto rounded-lg border border-neutral-800">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-neutral-900 text-neutral-400">
-            <tr>
-              <th className="px-4 py-3 font-medium">#</th>
-              <th className="px-4 py-3 font-medium" aria-hidden />
-              <th className="px-4 py-3 font-medium">Vendedor</th>
-              <th className="px-4 py-3 font-medium">Resultado</th>
-              <th className="px-4 py-3 font-medium">Meta</th>
-              <th className="px-4 py-3 font-medium">% da meta</th>
-              <th className="px-4 py-3 font-medium">Progresso</th>
-              <th className="px-4 py-3 font-medium">Pontuação</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-neutral-800">
-            {rows.map((row) => (
-              <tr key={row.sellerId} className="text-neutral-200">
-                <td className="px-4 py-3 font-semibold">{row.rank}º</td>
-                <td className="px-4 py-3">
-                  <SellerAvatar photoPath={row.photoPath} name={row.name} size={32} />
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap">{row.name}</td>
-                <td className="px-4 py-3 whitespace-nowrap">{row.resultLabel}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-neutral-400">{row.metaLabel}</td>
-                <td
-                  className={
-                    row.percent >= 100
-                      ? "px-4 py-3 whitespace-nowrap font-medium text-emerald-400"
-                      : "px-4 py-3 whitespace-nowrap font-medium text-neutral-200"
-                  }
-                >
-                  {row.percent.toFixed(0)}%
-                </td>
-                <td className="px-4 py-3">
-                  <ProgressBar percent={row.percent} />
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap font-semibold">{row.score.toFixed(1)}</td>
-              </tr>
-            ))}
-            {!rows.length && (
+      <Podium
+        entries={rows.slice(0, 3).map((row) => ({
+          sellerId: row.sellerId,
+          name: row.name,
+          photoPath: row.photoPath,
+          resultLabel: row.resultLabel,
+          percent: row.percent,
+        }))}
+      />
+
+      {rows.length > 3 && (
+        <div className="overflow-x-auto rounded-lg border border-neutral-800">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-neutral-900 text-neutral-400">
               <tr>
-                <td colSpan={8} className="px-4 py-6 text-center text-neutral-500">
-                  Nenhum vendedor com metas configuradas neste período.
-                </td>
+                <th className="px-4 py-3 font-medium">#</th>
+                <th className="px-4 py-3 font-medium" aria-hidden />
+                <th className="px-4 py-3 font-medium">Vendedor</th>
+                <th className="px-4 py-3 font-medium">Resultado</th>
+                <th className="px-4 py-3 font-medium">Meta</th>
+                <th className="px-4 py-3 font-medium">% da meta</th>
+                <th className="px-4 py-3 font-medium">Progresso</th>
+                <th className="px-4 py-3 font-medium">Pontuação</th>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-neutral-800">
+              {rows.slice(3).map((row) => (
+                <tr key={row.sellerId} className="text-neutral-200">
+                  <td className="px-4 py-3 font-semibold">{row.rank}º</td>
+                  <td className="px-4 py-3">
+                    <SellerAvatar photoPath={row.photoPath} name={row.name} size={32} />
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">{row.name}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">{row.resultLabel}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-neutral-400">{row.metaLabel}</td>
+                  <td
+                    className={
+                      row.percent >= 100
+                        ? "px-4 py-3 whitespace-nowrap font-medium text-emerald-400"
+                        : "px-4 py-3 whitespace-nowrap font-medium text-neutral-200"
+                    }
+                  >
+                    {row.percent.toFixed(0)}%
+                  </td>
+                  <td className="px-4 py-3">
+                    <ProgressBar percent={row.percent} />
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap font-semibold">{row.score.toFixed(1)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {!rows.length && (
+        <p className="text-sm text-neutral-500">
+          Nenhum vendedor com metas configuradas neste período.
+        </p>
+      )}
     </div>
   );
 }
