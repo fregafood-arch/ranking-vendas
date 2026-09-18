@@ -112,7 +112,6 @@ export default async function RankingPage({
                 <th className="px-4 py-3 font-medium">Meta</th>
                 <th className="px-4 py-3 font-medium">% da meta</th>
                 <th className="px-4 py-3 font-medium">Progresso</th>
-                <th className="px-4 py-3 font-medium">Pontuação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-800">
@@ -143,7 +142,6 @@ export default async function RankingPage({
                   <td className="px-4 py-3">
                     <ProgressBar percent={row.percent} />
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap font-semibold">{row.score.toFixed(1)}</td>
                 </tr>
               ))}
             </tbody>
