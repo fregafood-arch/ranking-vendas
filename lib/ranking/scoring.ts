@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -6,6 +7,10 @@ import { createClient } from "@/lib/supabase/server";
  * arquivo NUNCA reimplementa a aritmética do ranking — só chama a função
  * e formata o tipo de retorno para o TypeScript. O número exibido na tela
  * é sempre o número que o Postgres calculou.
+ *
+ * `client` é opcional: por padrão usa o cliente autenticado da sessão
+ * (cookies), mas o Modo TV (lib/supabase/tv.ts) passa seu próprio cliente
+ * (conta de serviço), já que não há sessão de cookie numa tela pública.
  */
 
 export type GeneralRankingRow = {
@@ -29,8 +34,11 @@ export type IndicatorAttainmentRow = {
   first_goal_hit_date: string | null;
 };
 
-export async function getGeneralRanking(periodId: string): Promise<GeneralRankingRow[]> {
-  const supabase = await createClient();
+export async function getGeneralRanking(
+  periodId: string,
+  client?: SupabaseClient,
+): Promise<GeneralRankingRow[]> {
+  const supabase = client ?? (await createClient());
   const { data, error } = await supabase.rpc("calculate_ranking", { p_period_id: periodId });
 
   if (error) {
@@ -40,8 +48,11 @@ export async function getGeneralRanking(periodId: string): Promise<GeneralRankin
   return (data ?? []) as GeneralRankingRow[];
 }
 
-export async function getIndicatorAttainment(periodId: string): Promise<IndicatorAttainmentRow[]> {
-  const supabase = await createClient();
+export async function getIndicatorAttainment(
+  periodId: string,
+  client?: SupabaseClient,
+): Promise<IndicatorAttainmentRow[]> {
+  const supabase = client ?? (await createClient());
   const { data, error } = await supabase.rpc("calculate_indicator_attainment", {
     p_period_id: periodId,
   });

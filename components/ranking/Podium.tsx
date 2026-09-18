@@ -9,21 +9,18 @@ export type PodiumEntry = {
   percent: number;
 };
 
-const STEP_STYLES: Record<1 | 2 | 3, { height: string; step: string; ring: string; medal: string }> = {
+const STEP_STYLES: Record<1 | 2 | 3, { step: string; ring: string; medal: string }> = {
   1: {
-    height: "h-28",
     step: "bg-gradient-to-b from-amber-400 to-amber-600",
     ring: "ring-amber-400",
     medal: "🥇",
   },
   2: {
-    height: "h-20",
     step: "bg-gradient-to-b from-slate-300 to-slate-500",
     ring: "ring-slate-300",
     medal: "🥈",
   },
   3: {
-    height: "h-14",
     step: "bg-gradient-to-b from-orange-500 to-orange-800",
     ring: "ring-orange-600",
     medal: "🥉",
@@ -34,17 +31,22 @@ function PodiumColumn({
   entry,
   rank,
   profileHref,
+  large,
 }: {
   entry: PodiumEntry;
   rank: 1 | 2 | 3;
   profileHref?: string;
+  large?: boolean;
 }) {
   const style = STEP_STYLES[rank];
-  const avatarSize = rank === 1 ? 88 : 64;
+  const heightClass = large
+    ? { 1: "h-40", 2: "h-28", 3: "h-20" }[rank]
+    : { 1: "h-28", 2: "h-20", 3: "h-14" }[rank];
+  const avatarSize = large ? (rank === 1 ? 160 : 112) : rank === 1 ? 88 : 64;
 
   return (
-    <div className="flex w-28 flex-col items-center gap-2 sm:w-36">
-      <span className="text-2xl">{style.medal}</span>
+    <div className={large ? "flex w-48 flex-col items-center gap-3 sm:w-56" : "flex w-28 flex-col items-center gap-2 sm:w-36"}>
+      <span className={large ? "text-5xl" : "text-2xl"}>{style.medal}</span>
       <Link href={profileHref ?? "#"} className={`rounded-full ring-4 ${style.ring}`}>
         <SellerAvatar photoPath={entry.photoPath} name={entry.name} size={avatarSize} />
       </Link>
@@ -52,8 +54,8 @@ function PodiumColumn({
         href={profileHref ?? "#"}
         className={
           rank === 1
-            ? "text-center text-base font-semibold text-neutral-50 hover:text-emerald-300"
-            : "text-center text-sm font-medium text-neutral-200 hover:text-emerald-300"
+            ? `text-center font-semibold text-neutral-50 hover:text-emerald-300 ${large ? "text-3xl" : "text-base"}`
+            : `text-center font-medium text-neutral-200 hover:text-emerald-300 ${large ? "text-xl" : "text-sm"}`
         }
       >
         {entry.name}
@@ -61,21 +63,29 @@ function PodiumColumn({
       <p
         className={
           rank === 1
-            ? "text-xl font-bold text-emerald-400"
-            : "text-base font-semibold text-emerald-400"
+            ? `font-bold text-emerald-400 ${large ? "text-5xl" : "text-xl"}`
+            : `font-semibold text-emerald-400 ${large ? "text-3xl" : "text-base"}`
         }
       >
         {entry.percent.toFixed(0)}%
       </p>
-      <p className="text-xs text-neutral-500">{entry.resultLabel}</p>
-      <div className={`mt-2 flex w-full items-start justify-center rounded-t-lg ${style.height} ${style.step}`}>
-        <span className="mt-2 text-2xl font-bold text-black/70">{rank}º</span>
+      <p className={large ? "text-lg text-neutral-400" : "text-xs text-neutral-500"}>{entry.resultLabel}</p>
+      <div className={`mt-2 flex w-full items-start justify-center rounded-t-lg ${heightClass} ${style.step}`}>
+        <span className={`mt-2 font-bold text-black/70 ${large ? "text-4xl" : "text-2xl"}`}>{rank}º</span>
       </div>
     </div>
   );
 }
 
-export function Podium({ entries, periodId }: { entries: PodiumEntry[]; periodId?: string }) {
+export function Podium({
+  entries,
+  periodId,
+  large,
+}: {
+  entries: PodiumEntry[];
+  periodId?: string;
+  large?: boolean;
+}) {
   const [first, second, third] = entries;
 
   if (!first) {
@@ -85,18 +95,26 @@ export function Podium({ entries, periodId }: { entries: PodiumEntry[]; periodId
   const hrefFor = (sellerId: string) =>
     periodId ? `/sellers/${sellerId}?period=${periodId}` : `/sellers/${sellerId}`;
 
+  const spacerClass = large ? "w-48 sm:w-56" : "w-28 sm:w-36";
+
   return (
-    <div className="flex items-end justify-center gap-4 rounded-xl border border-neutral-800 bg-neutral-900 px-6 pt-8 pb-0 sm:gap-8">
+    <div
+      className={
+        large
+          ? "flex items-end justify-center gap-10 rounded-2xl border border-neutral-800 bg-neutral-900 px-10 pt-12 pb-0 sm:gap-16"
+          : "flex items-end justify-center gap-4 rounded-xl border border-neutral-800 bg-neutral-900 px-6 pt-8 pb-0 sm:gap-8"
+      }
+    >
       {second ? (
-        <PodiumColumn entry={second} rank={2} profileHref={hrefFor(second.sellerId)} />
+        <PodiumColumn entry={second} rank={2} profileHref={hrefFor(second.sellerId)} large={large} />
       ) : (
-        <div className="w-28 sm:w-36" />
+        <div className={spacerClass} />
       )}
-      <PodiumColumn entry={first} rank={1} profileHref={hrefFor(first.sellerId)} />
+      <PodiumColumn entry={first} rank={1} profileHref={hrefFor(first.sellerId)} large={large} />
       {third ? (
-        <PodiumColumn entry={third} rank={3} profileHref={hrefFor(third.sellerId)} />
+        <PodiumColumn entry={third} rank={3} profileHref={hrefFor(third.sellerId)} large={large} />
       ) : (
-        <div className="w-28 sm:w-36" />
+        <div className={spacerClass} />
       )}
     </div>
   );
