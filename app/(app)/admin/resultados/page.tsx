@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ResultForm } from "@/components/results/ResultForm";
 import { DeleteResultButton } from "@/components/results/DeleteResultButton";
 import { createSalesResult } from "@/lib/actions/sales-results.actions";
+import { formatIndicatorValue } from "@/lib/format";
 
 function formatDate(value: string) {
   return new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
@@ -78,7 +79,9 @@ export default async function AdminResultsPage() {
                       : "—"}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    {Number(result.value).toLocaleString("pt-BR")}
+                    {result.indicators
+                      ? formatIndicatorValue(Number(result.value), result.indicators.unit)
+                      : Number(result.value).toLocaleString("pt-BR")}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-neutral-400">
                     {formatDate(result.entry_date)}

@@ -3,7 +3,8 @@ export function formatIndicatorValue(value: number, unit: string): string {
     return value.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL",
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     });
   }
 
