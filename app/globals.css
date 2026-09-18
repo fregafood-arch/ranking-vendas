@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+/*
+ * Tema fixo escuro: este é um painel interno / de TV de escritório, não um
+ * site público que precise seguir a preferência de claro/escuro do sistema
+ * operacional do visitante.
+ */
+:root {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
