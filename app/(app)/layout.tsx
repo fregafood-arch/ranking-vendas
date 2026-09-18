@@ -25,8 +25,8 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-screen bg-neutral-950">
-      <header className="flex items-center justify-between border-b border-neutral-800 px-6 py-4">
-        <nav className="flex gap-5 text-sm text-neutral-300">
+      <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-neutral-800 px-6 py-4">
+        <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-neutral-300">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
