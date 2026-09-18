@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SellerAvatar } from "@/components/sellers/SellerAvatar";
 
@@ -23,9 +24,10 @@ export default async function SellersPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {sellerRows.map((seller) => (
-          <div
+          <Link
             key={seller.id}
-            className="flex items-center gap-4 rounded-lg border border-neutral-800 bg-neutral-900 p-4"
+            href={`/sellers/${seller.id}`}
+            className="flex items-center gap-4 rounded-lg border border-neutral-800 bg-neutral-900 p-4 transition-colors hover:border-neutral-700"
           >
             <SellerAvatar photoPath={seller.photo_path} name={seller.full_name} size={48} />
             <div>
@@ -35,7 +37,7 @@ export default async function SellersPage() {
                 <p className="text-xs text-neutral-500">{seller.teams.name}</p>
               )}
             </div>
-          </div>
+          </Link>
         ))}
         {!sellerRows.length && (
           <p className="text-sm text-neutral-500">Nenhum vendedor ativo no momento.</p>

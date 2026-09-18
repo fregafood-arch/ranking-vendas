@@ -186,7 +186,7 @@ insert into achievements (code, name, icon, trigger_type, indicator_id, comparis
   ('META_BATIDA',        'Bateu a meta',              '🏆', 'GOAL_ATTAINMENT_PCT', null, 'GTE', 100, 'PERIOD'),
   ('SUPEROU_120',        'Superou 120% da meta',      '🚀', 'GOAL_ATTAINMENT_PCT', null, 'GTE', 120, 'PERIOD'),
   ('TOP_3',              'Top 3',                     '⭐', 'RANKING_POSITION',    null, 'LTE', 3,   'PERIOD'),
-  ('META_100_EXATA',     '100% da meta atingida',     '🎯', 'GOAL_ATTAINMENT_PCT', null, 'GTE', 100, 'PERIOD'),
+  ('META_100_EXATA',     '100% da meta atingida',     '🎯', 'GOAL_ATTAINMENT_PCT', null, 'EQ',  100, 'PERIOD'),
   ('MAIOR_VENDA_PERIODO','Maior venda do período',    '💎', 'ABSOLUTE_VALUE', '00000000-0000-0000-0000-000000000301', 'GTE', 0, 'PERIOD'),
   ('TRES_VENDAS_SEGUIDAS','3 vendas consecutivas',    '🔥', 'STREAK', '00000000-0000-0000-0000-000000000301', 'GTE', 3, 'ROLLING_WINDOW');
 

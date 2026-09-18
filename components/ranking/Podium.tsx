@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SellerAvatar } from "@/components/sellers/SellerAvatar";
 
 export type PodiumEntry = {
@@ -29,25 +30,34 @@ const STEP_STYLES: Record<1 | 2 | 3, { height: string; step: string; ring: strin
   },
 };
 
-function PodiumColumn({ entry, rank }: { entry: PodiumEntry; rank: 1 | 2 | 3 }) {
+function PodiumColumn({
+  entry,
+  rank,
+  profileHref,
+}: {
+  entry: PodiumEntry;
+  rank: 1 | 2 | 3;
+  profileHref?: string;
+}) {
   const style = STEP_STYLES[rank];
   const avatarSize = rank === 1 ? 88 : 64;
 
   return (
     <div className="flex w-28 flex-col items-center gap-2 sm:w-36">
       <span className="text-2xl">{style.medal}</span>
-      <div className={`rounded-full ring-4 ${style.ring}`}>
+      <Link href={profileHref ?? "#"} className={`rounded-full ring-4 ${style.ring}`}>
         <SellerAvatar photoPath={entry.photoPath} name={entry.name} size={avatarSize} />
-      </div>
-      <p
+      </Link>
+      <Link
+        href={profileHref ?? "#"}
         className={
           rank === 1
-            ? "text-center text-base font-semibold text-neutral-50"
-            : "text-center text-sm font-medium text-neutral-200"
+            ? "text-center text-base font-semibold text-neutral-50 hover:text-emerald-300"
+            : "text-center text-sm font-medium text-neutral-200 hover:text-emerald-300"
         }
       >
         {entry.name}
-      </p>
+      </Link>
       <p
         className={
           rank === 1
@@ -65,18 +75,29 @@ function PodiumColumn({ entry, rank }: { entry: PodiumEntry; rank: 1 | 2 | 3 }) 
   );
 }
 
-export function Podium({ entries }: { entries: PodiumEntry[] }) {
+export function Podium({ entries, periodId }: { entries: PodiumEntry[]; periodId?: string }) {
   const [first, second, third] = entries;
 
   if (!first) {
     return null;
   }
 
+  const hrefFor = (sellerId: string) =>
+    periodId ? `/sellers/${sellerId}?period=${periodId}` : `/sellers/${sellerId}`;
+
   return (
     <div className="flex items-end justify-center gap-4 rounded-xl border border-neutral-800 bg-neutral-900 px-6 pt-8 pb-0 sm:gap-8">
-      {second ? <PodiumColumn entry={second} rank={2} /> : <div className="w-28 sm:w-36" />}
-      <PodiumColumn entry={first} rank={1} />
-      {third ? <PodiumColumn entry={third} rank={3} /> : <div className="w-28 sm:w-36" />}
+      {second ? (
+        <PodiumColumn entry={second} rank={2} profileHref={hrefFor(second.sellerId)} />
+      ) : (
+        <div className="w-28 sm:w-36" />
+      )}
+      <PodiumColumn entry={first} rank={1} profileHref={hrefFor(first.sellerId)} />
+      {third ? (
+        <PodiumColumn entry={third} rank={3} profileHref={hrefFor(third.sellerId)} />
+      ) : (
+        <div className="w-28 sm:w-36" />
+      )}
     </div>
   );
 }

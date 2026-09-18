@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getGeneralRanking, getIndicatorAttainment } from "@/lib/ranking/scoring";
 import { PeriodPicker } from "@/components/shared/PeriodPicker";
@@ -89,6 +90,7 @@ export default async function RankingPage({
       <IndicatorFilterTabs indicators={indicators ?? []} activeIndicatorId={null} periodId={periodId} />
 
       <Podium
+        periodId={periodId}
         entries={rows.slice(0, 3).map((row) => ({
           sellerId: row.sellerId,
           name: row.name,
@@ -118,9 +120,15 @@ export default async function RankingPage({
                 <tr key={row.sellerId} className="text-neutral-200">
                   <td className="px-4 py-3 font-semibold">{row.rank}º</td>
                   <td className="px-4 py-3">
-                    <SellerAvatar photoPath={row.photoPath} name={row.name} size={32} />
+                    <Link href={`/sellers/${row.sellerId}?period=${periodId}`}>
+                      <SellerAvatar photoPath={row.photoPath} name={row.name} size={32} />
+                    </Link>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">{row.name}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <Link href={`/sellers/${row.sellerId}?period=${periodId}`} className="hover:text-neutral-50">
+                      {row.name}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 whitespace-nowrap">{row.resultLabel}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-neutral-400">{row.metaLabel}</td>
                   <td

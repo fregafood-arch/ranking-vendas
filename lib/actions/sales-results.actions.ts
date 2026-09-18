@@ -45,8 +45,35 @@ export async function createSalesResult(
     return { error: `Não foi possível lançar o resultado: ${error.message}` };
   }
 
+  await evaluateAchievementsForActivePeriods(supabase);
+
   revalidatePath("/admin/resultados");
   redirect("/admin/resultados");
+}
+
+/**
+ * Reavalia conquistas (ETAPA 8) logo após um lançamento, para os períodos
+ * marcados como ativos — não necessariamente o período ao qual entry_date
+ * pertence, o que é uma simplificação deliberada: cobre o caso comum (o
+ * lançamento é para o período corrente) sem precisar descobrir todos os
+ * períodos cujo intervalo de datas contém entry_date. Um lançamento
+ * retroativo para um período já encerrado não recalcula as conquistas
+ * daquele período antigo.
+ *
+ * Best-effort: um erro aqui não deve impedir o lançamento em si (que já
+ * foi gravado com sucesso), então falhas são ignoradas silenciosamente.
+ */
+async function evaluateAchievementsForActivePeriods(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<void> {
+  const { data: activePeriods } = await supabase.from("periods").select("id").eq("is_active", true);
+
+  for (const period of activePeriods ?? []) {
+    await supabase.rpc("evaluate_achievements", { p_period_id: period.id }).then(
+      () => undefined,
+      () => undefined,
+    );
+  }
 }
 
 export async function updateSalesResult(
