@@ -111,10 +111,17 @@ export function Podium({
     <div
       className={
         large
-          ? "flex items-end justify-center gap-10 rounded-2xl border border-neutral-800 bg-neutral-900 px-10 pt-12 pb-0 sm:gap-16"
-          : "flex items-end justify-center gap-4 rounded-xl border border-neutral-800 bg-neutral-900 px-6 pt-8 pb-0 sm:gap-8"
+          ? "relative flex items-end justify-center gap-10 overflow-hidden rounded-2xl bg-neutral-900 px-10 pt-12 pb-0 sm:gap-16"
+          : "relative flex items-end justify-center gap-4 overflow-hidden rounded-2xl bg-neutral-900 px-6 pt-8 pb-0 sm:gap-8"
       }
     >
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 480px 260px at 50% 0%, rgba(251,191,36,0.10), transparent 70%)",
+        }}
+      />
       {second ? (
         <PodiumColumn entry={second} rank={2} profileHref={hrefFor(second.sellerId)} large={large} />
       ) : (

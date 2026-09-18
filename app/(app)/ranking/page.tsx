@@ -24,7 +24,7 @@ export default async function RankingPage({
   if (!periods?.length) {
     return (
       <div className="space-y-4">
-        <h1 className="text-xl font-semibold text-neutral-50">Ranking Geral</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-neutral-50">Ranking Geral</h1>
         <p className="text-sm text-neutral-400">Nenhum período cadastrado ainda.</p>
       </div>
     );
@@ -83,7 +83,7 @@ export default async function RankingPage({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold text-neutral-50">Ranking Geral</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-neutral-50">Ranking Geral</h1>
         <PeriodPicker periods={periods} selectedId={periodId} basePath="/ranking" />
       </div>
 
@@ -101,9 +101,9 @@ export default async function RankingPage({
       />
 
       {rows.length > 3 && (
-        <div className="overflow-x-auto rounded-lg border border-neutral-800">
+        <div className="overflow-x-auto rounded-2xl bg-neutral-900">
           <table className="w-full text-left text-sm">
-            <thead className="bg-neutral-900 text-neutral-400">
+            <thead className="text-neutral-500">
               <tr>
                 <th className="px-4 py-3 font-medium">#</th>
                 <th className="px-4 py-3 font-medium" aria-hidden />
@@ -117,7 +117,7 @@ export default async function RankingPage({
             </thead>
             <tbody className="divide-y divide-neutral-800">
               {rows.slice(3).map((row) => (
-                <tr key={row.sellerId} className="text-neutral-200">
+                <tr key={row.sellerId} className="text-neutral-200 transition-colors hover:bg-neutral-800/50">
                   <td className="px-4 py-3 font-semibold">{row.rank}º</td>
                   <td className="px-4 py-3">
                     <Link href={`/sellers/${row.sellerId}?period=${periodId}`}>

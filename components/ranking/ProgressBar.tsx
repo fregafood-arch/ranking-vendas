@@ -11,7 +11,11 @@ export function ProgressBar({
   return (
     <div className={`overflow-hidden rounded-full bg-neutral-800 ${className}`}>
       <div
-        className={overAchieved ? "h-full bg-emerald-400" : "h-full bg-emerald-600"}
+        className={
+          overAchieved
+            ? "h-full bg-gradient-to-r from-emerald-500 to-emerald-300"
+            : "h-full bg-gradient-to-r from-emerald-700 to-emerald-500"
+        }
         style={{ width: `${clamped}%` }}
       />
     </div>

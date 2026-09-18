@@ -3,6 +3,7 @@ import { getGeneralRanking, getIndicatorAttainment } from "@/lib/ranking/scoring
 import { PeriodPicker } from "@/components/shared/PeriodPicker";
 import { StatTile } from "@/components/dashboard/StatTile";
 import { HighlightCard } from "@/components/dashboard/HighlightCard";
+import { ProgressBar } from "@/components/ranking/ProgressBar";
 import { formatIndicatorValue } from "@/lib/format";
 
 export default async function DashboardPage({
@@ -21,7 +22,7 @@ export default async function DashboardPage({
   if (!periods?.length) {
     return (
       <div className="space-y-4">
-        <h1 className="text-xl font-semibold text-neutral-50">Dashboard</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-neutral-50">Dashboard</h1>
         <p className="text-sm text-neutral-400">Nenhum período cadastrado ainda.</p>
       </div>
     );
@@ -213,13 +214,13 @@ export default async function DashboardPage({
   return (
     <div className="space-y-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold text-neutral-50">Dashboard</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-neutral-50">Dashboard</h1>
         <PeriodPicker periods={periods} selectedId={periodId} basePath="/dashboard" />
       </div>
 
       {!!teamGoals?.length && (
         <section className="space-y-4">
-          <h2 className="text-lg font-medium text-neutral-100">Meta da equipe</h2>
+          <h2 className="text-xl font-semibold text-neutral-100">Meta da equipe</h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {teamGoals.map((goal) => {
               const indicator = indicatorById.get(goal.indicator_id);
@@ -234,25 +235,20 @@ export default async function DashboardPage({
               return (
                 <div
                   key={goal.indicator_id}
-                  className="space-y-3 rounded-xl border border-neutral-800 bg-neutral-900 p-6"
+                  className="space-y-4 rounded-2xl bg-neutral-900 p-6"
                 >
                   <div className="flex items-baseline justify-between">
                     <p className="text-sm text-neutral-400">{indicator.name}</p>
-                    <p className="text-sm font-medium text-neutral-300">{percent.toFixed(1)}%</p>
+                    <p className="text-sm font-medium text-emerald-400">{percent.toFixed(1)}%</p>
                   </div>
-                  <p className="text-2xl font-bold text-neutral-50">
+                  <p className="text-3xl font-bold tracking-tight tabular-nums text-neutral-50">
                     {formatIndicatorValue(realized, indicator.unit)}
-                    <span className="text-base font-normal text-neutral-500">
+                    <span className="text-lg font-normal tracking-normal text-neutral-500">
                       {" "}
                       / {formatIndicatorValue(target, indicator.unit)}
                     </span>
                   </p>
-                  <div className="h-3 w-full overflow-hidden rounded-full bg-neutral-800">
-                    <div
-                      className="h-full bg-emerald-500"
-                      style={{ width: `${Math.min(percent, 100)}%` }}
-                    />
-                  </div>
+                  <ProgressBar percent={percent} className="h-3 w-full" />
                   <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-neutral-500">
                     <span>Faltam {formatIndicatorValue(remaining, indicator.unit)}</span>
                     <span>{daysRemaining} dia(s) restante(s) no período</span>
@@ -268,7 +264,7 @@ export default async function DashboardPage({
       )}
 
       <section className="space-y-4">
-        <h2 className="text-lg font-medium text-neutral-100">Destaques</h2>
+        <h2 className="text-xl font-semibold text-neutral-100">Destaques</h2>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {highlights.map((highlight) => (
             <HighlightCard key={highlight.title} {...highlight} />
@@ -277,17 +273,17 @@ export default async function DashboardPage({
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-medium text-neutral-100">Resumo da equipe</h2>
+        <h2 className="text-xl font-semibold text-neutral-100">Resumo da equipe</h2>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <StatTile label="Bateram a meta" value={String(metGoalCount)} />
-          <StatTile label="Abaixo da meta" value={String(belowGoalCount)} />
+          <StatTile label="Bateram a meta" value={String(metGoalCount)} tone="positive" />
+          <StatTile label="Abaixo da meta" value={String(belowGoalCount)} tone="warning" />
           <StatTile label="Média de atingimento" value={`${averageAttainment.toFixed(0)}%`} />
           <StatTile label="Melhor vendedor" value={bestSellerName} />
         </div>
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-medium text-neutral-100">Totais por indicador</h2>
+        <h2 className="text-xl font-semibold text-neutral-100">Totais por indicador</h2>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {(indicators ?? []).map((indicator) => (
             <StatTile
