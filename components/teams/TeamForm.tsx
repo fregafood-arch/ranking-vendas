@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import type { TeamFormState } from "@/lib/actions/teams.actions";
+import { FormActions } from "@/components/shared/FormActions";
 
 export function TeamForm({
   action,
@@ -31,13 +32,7 @@ export function TeamForm({
 
       {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-500 disabled:opacity-60"
-      >
-        {pending ? "Salvando..." : submitLabel}
-      </button>
+      <FormActions submitLabel={submitLabel} pending={pending} cancelHref="/admin/equipes" />
     </form>
   );
 }

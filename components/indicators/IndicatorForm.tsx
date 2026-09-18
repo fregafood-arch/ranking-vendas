@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import type { IndicatorFormState } from "@/lib/actions/indicators.actions";
 import { UNIT_OPTIONS } from "@/lib/validations/indicator";
+import { FormActions } from "@/components/shared/FormActions";
 
 const inputClass =
   "w-full rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none focus:border-neutral-500";
@@ -70,13 +71,7 @@ export function IndicatorForm({
 
       {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-500 disabled:opacity-60"
-      >
-        {pending ? "Salvando..." : submitLabel}
-      </button>
+      <FormActions submitLabel={submitLabel} pending={pending} cancelHref="/admin/indicadores" />
     </form>
   );
 }
