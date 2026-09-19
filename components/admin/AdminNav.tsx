@@ -27,7 +27,7 @@ export function AdminNav() {
             href={item.href}
             className={
               isActive
-                ? "rounded-full bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white"
+                ? "rounded-full bg-blue-600 px-3 py-1.5 text-sm font-medium text-white"
                 : "rounded-full px-3 py-1.5 text-sm text-neutral-400 transition-colors hover:bg-neutral-900 hover:text-neutral-100"
             }
           >

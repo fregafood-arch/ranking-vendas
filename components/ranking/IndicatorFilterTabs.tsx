@@ -2,7 +2,7 @@ import Link from "next/link";
 
 function tabClass(isActive: boolean) {
   return isActive
-    ? "rounded-full bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white"
+    ? "rounded-full bg-blue-600 px-3 py-1.5 text-sm font-medium text-white"
     : "rounded-full px-3 py-1.5 text-sm text-neutral-400 transition-colors hover:text-neutral-100";
 }
 

@@ -17,7 +17,7 @@ export default async function AdminIndicatorsPage() {
         <h1 className="text-xl font-semibold text-neutral-50">Indicadores</h1>
         <Link
           href="/admin/indicadores/novo"
-          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-500"
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-500"
         >
           Novo indicador
         </Link>

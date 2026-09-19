@@ -36,7 +36,7 @@ export function ThemeSwitcher({ current }: { current: AppTheme }) {
             onClick={() => handleSelect(option.value)}
             className={
               selected === option.value
-                ? "rounded-2xl bg-neutral-800 p-4 text-left ring-2 ring-emerald-500 disabled:opacity-60"
+                ? "rounded-2xl bg-neutral-800 p-4 text-left ring-2 ring-blue-500 disabled:opacity-60"
                 : "rounded-2xl bg-neutral-900 p-4 text-left transition-colors hover:bg-neutral-800 disabled:opacity-60"
             }
           >
