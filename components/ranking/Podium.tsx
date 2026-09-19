@@ -540,10 +540,10 @@ function ZoeiraHeader({ large }: { large?: boolean }) {
           className="font-black tracking-tight text-neutral-50"
           style={{ fontSize: large ? "2.75rem" : "1.5rem" }}
         >
-          Pódio da <span className="text-blue-400">Zoeira</span> 👑
+          Ranking de <span className="text-blue-400">Vendas</span> 👑
         </h2>
         <p className={large ? "mt-1 text-base text-neutral-400" : "mt-0.5 text-xs text-neutral-400"}>
-          vender também pode ser divertido 😎
+          Foco na meta. Olho no topo.
         </p>
       </div>
     </div>
