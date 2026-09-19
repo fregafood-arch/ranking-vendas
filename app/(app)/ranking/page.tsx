@@ -91,7 +91,7 @@ export default async function RankingPage({
 
       <IndicatorFilterTabs indicators={indicators ?? []} activeIndicatorId={null} periodId={periodId} />
 
-      <div className="flex flex-col items-center gap-6 md:flex-row md:items-start">
+      <div className="flex flex-col items-center gap-6 md:flex-row md:items-start md:justify-center">
         <Podium
           periodId={periodId}
           theme={theme}
@@ -105,7 +105,7 @@ export default async function RankingPage({
         />
 
         {rows.length > 3 && (
-          <aside className="hidden w-full min-w-[260px] rounded-2xl bg-neutral-900 p-3 md:block md:flex-1">
+          <aside className="hidden w-full min-w-[260px] rounded-2xl bg-neutral-900 p-3 md:block md:max-w-xs md:flex-1">
             <h2 className="mb-1 px-2 pt-1 text-sm font-medium text-neutral-400">Próximos colocados</h2>
             <div className="space-y-0.5">
               {rows.slice(3).map((row) => (
