@@ -8,6 +8,8 @@ import { ProgressBar } from "@/components/ranking/ProgressBar";
 import { SellerAvatar } from "@/components/sellers/SellerAvatar";
 import { formatIndicatorValue } from "@/lib/format";
 import { getActiveTheme } from "@/lib/theme";
+import { getCurrentProfile } from "@/lib/auth/get-current-profile";
+import { ThemeSwitcher } from "@/components/admin/ThemeSwitcher";
 
 export default async function RankingPage({
   searchParams,
@@ -40,11 +42,12 @@ export default async function RankingPage({
     .eq("is_active", true)
     .order("name");
 
-  const [ranking, attainment, { data: sellers }, theme] = await Promise.all([
+  const [ranking, attainment, { data: sellers }, theme, profile] = await Promise.all([
     getGeneralRanking(periodId),
     getIndicatorAttainment(periodId),
     supabase.from("sellers").select("id, full_name, photo_path"),
     getActiveTheme(),
+    getCurrentProfile(),
   ]);
 
   const sellerById = new Map((sellers ?? []).map((seller) => [seller.id, seller]));
@@ -137,6 +140,18 @@ export default async function RankingPage({
           </aside>
         )}
       </div>
+
+      {profile.role === "ADMIN" && (
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-lg font-medium text-neutral-100">Aparência</h2>
+            <p className="text-sm text-neutral-500">
+              Skin visual usada no Ranking, Pódio e Modo TV — vale para todo mundo que acessar.
+            </p>
+          </div>
+          <ThemeSwitcher current={theme} />
+        </section>
+      )}
 
       {rows.length > 3 && (
         <div className="overflow-x-auto rounded-2xl bg-neutral-900 md:hidden">
