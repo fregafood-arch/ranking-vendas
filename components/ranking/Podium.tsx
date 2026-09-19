@@ -384,23 +384,39 @@ function zoeiraFlavor(percent: number): { sticker: string; tag: string; quote: s
   return { sticker: "👻", tag: "Sumiu no CRM", quote: "Lenda urbana do pipeline." };
 }
 
+const LAUREL_LEAVES = [
+  { x: 36, y: 71, angle: -62 },
+  { x: 31, y: 57, angle: -48 },
+  { x: 25, y: 44, angle: -28 },
+  { x: 19, y: 32, angle: -6 },
+  { x: 13, y: 21, angle: 16 },
+  { x: 8, y: 9, angle: 38 },
+];
+
 function LaurelBranch({ flip, color }: { flip?: boolean; color: string }) {
   return (
     <svg
-      viewBox="0 0 40 90"
-      style={{ width: "1.6em", height: "3.6em", transform: flip ? "scaleX(-1)" : undefined }}
+      viewBox="0 0 44 80"
+      style={{ width: "1.3em", height: "2.9em", transform: flip ? "scaleX(-1)" : undefined }}
       aria-hidden
     >
-      {[0, 1, 2, 3, 4, 5].map((i) => (
+      <path
+        d="M39 76 C 34 58 29 46 23 33 C 19 23 14 14 7 4"
+        stroke={color}
+        strokeWidth="1.5"
+        fill="none"
+        opacity="0.7"
+      />
+      {LAUREL_LEAVES.map((leaf, i) => (
         <ellipse
           key={i}
-          cx={28 - i * 1.5}
-          cy={8 + i * 14}
-          rx="10"
-          ry="5"
+          cx={leaf.x}
+          cy={leaf.y}
+          rx="8.5"
+          ry="4"
           fill={color}
-          opacity={0.9 - i * 0.07}
-          transform={`rotate(${-30 + i * 6} ${28 - i * 1.5} ${8 + i * 14})`}
+          opacity={0.55 + i * 0.08}
+          transform={`rotate(${leaf.angle} ${leaf.x} ${leaf.y})`}
         />
       ))}
     </svg>
@@ -493,9 +509,8 @@ function PodiumColumnZoeira({
         style={{ filter: `drop-shadow(0 8px 18px ${style.glow})` }}
       >
         {isChampion && (
-          <div className="mb-1 flex items-center gap-1" style={{ color: style.ring }} aria-hidden>
+          <div className="mb-[-0.4em] flex items-end" style={{ color: style.ring }} aria-hidden>
             <LaurelBranch color={style.ring} />
-            <span className="text-sm">🏅</span>
             <LaurelBranch flip color={style.ring} />
           </div>
         )}
