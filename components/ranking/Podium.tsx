@@ -80,34 +80,94 @@ function PodiumColumnDefault({
 }
 
 // ============================================================================
-// Tema "game" ("Arena") — escudo em degradê + gema + plataforma com brilho,
-// inspirado numa arte de referência enviada pelo usuário. Recriado só com
-// CSS (clip-path, gradientes, glow) — não é uma cópia pixel a pixel da
-// ilustração original, que usa assets 3D prontos.
+// Tema "game" ("Arena") — placar de cerimônia: medalhão hexagonal, coroa e
+// anel giratório reservados só para o 1º lugar (o único "momento" de
+// destaque), pedestal com o número gravado e placa de nome com um brilho
+// passando. Inspirado na arte de referência enviada pelo usuário, recriado
+// inteiramente em CSS (clip-path, gradientes, glow) — sem imagens prontas.
 // ============================================================================
 
-const GAME_STYLES: Record<1 | 2 | 3, { gradient: string; glow: string; gem: string; ring: string }> = {
+const GAME_STYLES: Record<
+  1 | 2 | 3,
+  { medallion: string; pedestal: string; glow: string; ring: string; gem: string }
+> = {
   1: {
-    gradient: "linear-gradient(160deg, #6690ff 0%, #2946b8 55%, #16205e 100%)",
-    glow: "rgba(96,140,255,0.65)",
+    medallion: "linear-gradient(160deg, #ffe9b0 0%, #ffb627 45%, #8a5a08 100%)",
+    pedestal: "linear-gradient(180deg, #ffcf6b, #a8710d)",
+    glow: "rgba(255,183,39,0.55)",
+    ring: "#ffc94a",
     gem: "linear-gradient(135deg, #fff3c4, #f5b301)",
-    ring: "#ffd873",
   },
   2: {
-    gradient: "linear-gradient(160deg, #4fe0c9 0%, #0f9488 55%, #0a5f57 100%)",
-    glow: "rgba(45,212,191,0.55)",
+    medallion: "linear-gradient(160deg, #baffef 0%, #52f2c6 45%, #0a5f52 100%)",
+    pedestal: "linear-gradient(180deg, #7ff5d8, #0d8a73)",
+    glow: "rgba(82,242,198,0.45)",
+    ring: "#52f2c6",
     gem: "linear-gradient(135deg, #ccfbf1, #14b8a6)",
-    ring: "#5eead4",
   },
   3: {
-    gradient: "linear-gradient(160deg, #ff9d5c 0%, #d0451b 55%, #7a1a10 100%)",
-    glow: "rgba(255,138,76,0.55)",
+    medallion: "linear-gradient(160deg, #ffcfae 0%, #ff8a4c 45%, #7a2f0c 100%)",
+    pedestal: "linear-gradient(180deg, #ffab78, #c2410c)",
+    glow: "rgba(255,138,76,0.45)",
+    ring: "#ff8a4c",
     gem: "linear-gradient(135deg, #ffd7b8, #f0631f)",
-    ring: "#ffb27a",
   },
 };
 
-const SHIELD_CLIP = "polygon(0% 0%, 100% 0%, 100% 62%, 50% 100%, 0% 62%)";
+const HEX_CLIP = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
+
+const SPARKS = [
+  { left: "6%", bottom: "8%", delay: "0s", size: 5 },
+  { left: "88%", bottom: "22%", delay: "0.6s", size: 4 },
+  { left: "48%", bottom: "-4%", delay: "1.1s", size: 6 },
+  { left: "18%", bottom: "58%", delay: "1.7s", size: 4 },
+  { left: "78%", bottom: "55%", delay: "0.3s", size: 5 },
+];
+
+function Crown({ width }: { width: number }) {
+  return (
+    <svg width={width} height={width * 0.6} viewBox="0 0 48 30" className="drop-shadow-[0_0_6px_rgba(255,183,39,0.7)]">
+      <path
+        d="M2 27 L2 12 L14 20 L24 4 L34 20 L46 12 L46 27 Z"
+        fill="url(#arena-crown-gradient)"
+        stroke="#8a5a08"
+        strokeWidth="1"
+        strokeLinejoin="round"
+      />
+      <circle cx="24" cy="4" r="3" fill="#fff3c4" />
+      <circle cx="2" cy="12" r="2.4" fill="#fff3c4" />
+      <circle cx="46" cy="12" r="2.4" fill="#fff3c4" />
+      <defs>
+        <linearGradient id="arena-crown-gradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffe9b0" />
+          <stop offset="100%" stopColor="#ffb627" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function SparkField({ color }: { color: string }) {
+  return (
+    <div className="pointer-events-none absolute inset-[-20%]" aria-hidden>
+      {SPARKS.map((spark, i) => (
+        <span
+          key={i}
+          className="arena-spark absolute rounded-full"
+          style={{
+            left: spark.left,
+            bottom: spark.bottom,
+            width: spark.size,
+            height: spark.size,
+            background: color,
+            boxShadow: `0 0 6px ${color}`,
+            animation: `arena-spark-rise 2.6s ease-in ${spark.delay} infinite`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 function PodiumColumnGame({
   entry,
@@ -121,56 +181,111 @@ function PodiumColumnGame({
   large?: boolean;
 }) {
   const style = GAME_STYLES[rank];
-  const shieldSize = large
-    ? { 1: { w: 168, h: 176 }, 2: { w: 128, h: 134 }, 3: { w: 128, h: 134 } }[rank]
-    : { 1: { w: 120, h: 126 }, 2: { w: 92, h: 96 }, 3: { w: 92, h: 96 } }[rank];
-  const avatarSize = large ? (rank === 1 ? 84 : 64) : rank === 1 ? 56 : 44;
-  const platformWidth = shieldSize.w * 0.8;
+  const isChampion = rank === 1;
+
+  const colWidth = large
+    ? { 1: 176, 2: 136, 3: 136 }[rank]
+    : { 1: 132, 2: 104, 3: 104 }[rank];
+  const hexSize = large ? { 1: 124, 2: 96, 3: 96 }[rank] : { 1: 92, 2: 72, 3: 72 }[rank];
+  const avatarSize = large ? { 1: 88, 2: 66, 3: 66 }[rank] : { 1: 64, 2: 48, 3: 48 }[rank];
+  const pedestalHeight = large
+    ? { 1: 148, 2: 104, 3: 76 }[rank]
+    : { 1: 92, 2: 64, 3: 46 }[rank];
 
   return (
     <div
-      className="flex origin-bottom flex-col items-center opacity-0"
-      style={{ animation: `podium-rise 0.7s ease-out ${RISE_DELAY_MS[rank]}ms both` }}
+      className="relative flex origin-bottom flex-col items-center opacity-0"
+      style={{ width: colWidth, animation: `podium-rise 0.7s ease-out ${RISE_DELAY_MS[rank]}ms both` }}
     >
-      <div
-        className="h-4 w-4 rotate-45 rounded-sm"
-        style={{ background: style.gem, boxShadow: `0 0 14px ${style.glow}` }}
-      />
-      <div
-        className="relative -mt-1 flex items-center justify-center pb-[18%]"
-        style={{
-          width: shieldSize.w,
-          height: shieldSize.h,
-          background: style.gradient,
-          clipPath: SHIELD_CLIP,
-          boxShadow: `0 0 30px ${style.glow}`,
-        }}
-      >
-        <Link href={profileHref} className="rounded-full ring-4" style={{ ["--tw-ring-color" as string]: style.ring }}>
-          <SellerAvatar photoPath={entry.photoPath} name={entry.name} size={avatarSize} />
-        </Link>
+      {isChampion && (
+        <div
+          className="pointer-events-none absolute top-[-14%] left-1/2 -translate-x-1/2"
+          style={{
+            width: large ? 240 : 175,
+            height: large ? 300 : 220,
+            background: "linear-gradient(180deg, rgba(255,201,74,0.28), rgba(255,201,74,0) 78%)",
+            clipPath: "polygon(42% 0%, 58% 0%, 100% 100%, 0% 100%)",
+          }}
+          aria-hidden
+        />
+      )}
+
+      <div className="relative flex flex-col items-center">
+        {isChampion ? (
+          <Crown width={large ? 52 : 38} />
+        ) : (
+          <div
+            className="h-3.5 w-3.5 rotate-45 rounded-sm"
+            style={{ background: style.gem, boxShadow: `0 0 12px ${style.glow}` }}
+          />
+        )}
+
+        <div className="relative mt-1" style={{ width: hexSize, height: hexSize }}>
+          {isChampion && (
+            <div
+              className="arena-ring-spin pointer-events-none absolute inset-[-14%] rounded-full"
+              style={{ border: "2px dashed rgba(255,201,74,0.6)", animation: "arena-ring-spin 9s linear infinite" }}
+              aria-hidden
+            />
+          )}
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ background: style.medallion, clipPath: HEX_CLIP, boxShadow: `0 0 28px ${style.glow}` }}
+          >
+            <Link href={profileHref} className="rounded-full ring-4" style={{ ["--tw-ring-color" as string]: style.ring }}>
+              <SellerAvatar photoPath={entry.photoPath} name={entry.name} size={avatarSize} />
+            </Link>
+          </div>
+          {isChampion && <SparkField color={style.ring} />}
+        </div>
       </div>
+
       <div
-        className="-mt-1 rounded-full"
-        style={{
-          width: platformWidth,
-          height: 10,
-          background: style.glow,
-          filter: "blur(7px)",
-        }}
-      />
-      <Link
-        href={profileHref}
-        className={`mt-2 max-w-[8.5rem] text-center font-bold text-neutral-50 hover:text-emerald-300 ${large ? "text-base" : "text-xs"}`}
+        className="relative mt-3 max-w-full overflow-hidden rounded-lg px-3 py-1.5 text-center"
+        style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${style.ring}4d` }}
       >
-        {entry.name}
-      </Link>
-      <p className={`font-semibold ${large ? "text-sm" : "text-[11px]"}`} style={{ color: style.ring }}>
-        {entry.percent.toFixed(0)}% da meta
-      </p>
+        {isChampion && (
+          <div
+            className="arena-shine pointer-events-none absolute inset-0"
+            style={{
+              background: "linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.35) 50%, transparent 60%)",
+              backgroundSize: "60% 100%",
+              backgroundRepeat: "no-repeat",
+              animation: "arena-shine-sweep 3.6s ease-in-out infinite",
+            }}
+            aria-hidden
+          />
+        )}
+        <Link
+          href={profileHref}
+          className={`relative block truncate font-semibold text-neutral-50 hover:text-emerald-300 ${large ? "text-base" : "text-xs"}`}
+        >
+          {entry.name}
+        </Link>
+        <p
+          className={`relative font-bold ${large ? "text-lg" : "text-sm"}`}
+          style={{ fontFamily: "var(--font-arena-display)", color: style.ring }}
+        >
+          {entry.percent.toFixed(0)}%
+        </p>
+      </div>
+
       <p className={large ? "mt-1 text-sm text-neutral-400" : "mt-0.5 text-xs text-neutral-500"}>
         {entry.resultLabel}
       </p>
+
+      <div
+        className="relative mt-3 flex w-full items-start justify-center overflow-hidden rounded-t-md"
+        style={{ height: pedestalHeight, background: style.pedestal, boxShadow: `0 0 22px ${style.glow}` }}
+      >
+        <div className="absolute inset-x-0 top-0 h-[3px] bg-white/55" aria-hidden />
+        <span
+          className="mt-1 leading-none font-black text-black/25 select-none"
+          style={{ fontFamily: "var(--font-arena-display)", fontSize: large ? 44 : 28 }}
+        >
+          {rank}
+        </span>
+      </div>
     </div>
   );
 }
@@ -197,19 +312,20 @@ export function Podium({
 
   const PodiumColumn = theme === "game" ? PodiumColumnGame : PodiumColumnDefault;
   const spacerClass = large ? "w-48 sm:w-56" : "w-28 sm:w-36";
+  const gameSpacerWidth = large ? 136 : 104;
 
   const containerClass =
     theme === "game"
       ? large
-        ? "relative flex items-end justify-center gap-8 overflow-hidden rounded-2xl bg-[#0b1130] px-10 pt-14 pb-0 sm:gap-14"
-        : "relative flex items-end justify-center gap-4 overflow-hidden rounded-2xl bg-[#0b1130] px-6 pt-10 pb-0 sm:gap-6"
+        ? "relative flex items-end justify-center gap-6 overflow-hidden rounded-2xl bg-[#0b1130] px-8 pt-20 pb-0 sm:gap-10"
+        : "relative flex items-end justify-center gap-3 overflow-hidden rounded-2xl bg-[#0b1130] px-5 pt-16 pb-0 sm:gap-5"
       : large
         ? "relative flex items-end justify-center gap-10 overflow-hidden rounded-2xl bg-neutral-900 px-10 pt-12 pb-0 sm:gap-16"
         : "relative flex items-end justify-center gap-4 overflow-hidden rounded-2xl bg-neutral-900 px-6 pt-8 pb-0 sm:gap-8";
 
   const glowBackground =
     theme === "game"
-      ? "radial-gradient(ellipse 620px 320px at 50% 0%, rgba(102,144,255,0.18), transparent 70%)"
+      ? "radial-gradient(ellipse 560px 320px at 50% 0%, rgba(255,183,39,0.16), transparent 70%)"
       : "radial-gradient(ellipse 480px 260px at 50% 0%, rgba(251,191,36,0.10), transparent 70%)";
 
   return (
@@ -227,12 +343,16 @@ export function Podium({
       )}
       {second ? (
         <PodiumColumn entry={second} rank={2} profileHref={hrefFor(second.sellerId)} large={large} />
+      ) : theme === "game" ? (
+        <div style={{ width: gameSpacerWidth }} />
       ) : (
         <div className={spacerClass} />
       )}
       <PodiumColumn entry={first} rank={1} profileHref={hrefFor(first.sellerId)} large={large} />
       {third ? (
         <PodiumColumn entry={third} rank={3} profileHref={hrefFor(third.sellerId)} large={large} />
+      ) : theme === "game" ? (
+        <div style={{ width: gameSpacerWidth }} />
       ) : (
         <div className={spacerClass} />
       )}
