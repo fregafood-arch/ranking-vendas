@@ -341,6 +341,217 @@ function PodiumColumnGame({
   );
 }
 
+// ============================================================================
+// Tema "zoeira" — pódio de humor: bloco 3D com bisel, avatar redondo com
+// figurinha de emoji, "etiqueta" com apelido + citação. Apelido e citação
+// são CALCULADOS a partir do % de atingimento real (não fixos por
+// vendedor) — assim continuam corretos quando os números mudarem, em vez
+// de virar piada errada. Inspirado na arte de referência enviada pelo
+// usuário ("Pódio da Zoeira"), recriado em CSS.
+// ============================================================================
+
+const ZOEIRA_STYLES: Record<1 | 2 | 3, { ring: string; glow: string; top: string; front: string }> = {
+  1: {
+    ring: "#ffcf40",
+    glow: "rgba(255,207,64,0.55)",
+    top: "linear-gradient(135deg, #fff3c4, #ffcf40)",
+    front: "linear-gradient(180deg, #f5a623, #a8710d)",
+  },
+  2: {
+    ring: "#22d3ee",
+    glow: "rgba(34,211,238,0.5)",
+    top: "linear-gradient(135deg, #cffafe, #22d3ee)",
+    front: "linear-gradient(180deg, #0891b2, #0a4d5c)",
+  },
+  3: {
+    ring: "#ff7a59",
+    glow: "rgba(255,122,89,0.5)",
+    top: "linear-gradient(135deg, #ffd4c2, #ff7a59)",
+    front: "linear-gradient(180deg, #dc4b26, #7a1f0c)",
+  },
+};
+
+function zoeiraFlavor(percent: number): { sticker: string; tag: string; quote: string } {
+  if (percent >= 150) {
+    return { sticker: "🚀", tag: "Imparável", quote: "Não para, não cansa." };
+  }
+  if (percent >= 100) {
+    return { sticker: "🏆", tag: "Bateu a meta", quote: "Prometeu, cumpriu." };
+  }
+  if (percent >= 70) {
+    return { sticker: "🎯", tag: "Quase lá", quote: "Fala que vai e entrega (quase)." };
+  }
+  return { sticker: "👻", tag: "Sumiu no CRM", quote: "Lenda urbana do pipeline." };
+}
+
+function LaurelBranch({ flip, color }: { flip?: boolean; color: string }) {
+  return (
+    <svg
+      viewBox="0 0 40 90"
+      style={{ width: "1.6em", height: "3.6em", transform: flip ? "scaleX(-1)" : undefined }}
+      aria-hidden
+    >
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <ellipse
+          key={i}
+          cx={28 - i * 1.5}
+          cy={8 + i * 14}
+          rx="10"
+          ry="5"
+          fill={color}
+          opacity={0.9 - i * 0.07}
+          transform={`rotate(${-30 + i * 6} ${28 - i * 1.5} ${8 + i * 14})`}
+        />
+      ))}
+    </svg>
+  );
+}
+
+function PodiumColumnZoeira({
+  entry,
+  rank,
+  profileHref,
+  large,
+}: {
+  entry: PodiumEntry;
+  rank: 1 | 2 | 3;
+  profileHref: string;
+  large?: boolean;
+}) {
+  const style = ZOEIRA_STYLES[rank];
+  const flavor = zoeiraFlavor(entry.percent);
+  const isChampion = rank === 1;
+
+  const vpMax = large ? 2000 : 2200;
+  const vhMax = 1080;
+  const sizes = large
+    ? {
+        1: { col: fluid(176, 364, vpMax), avatar: fluidWH(96, 190, vpMax, vhMax), ring: fluidWH(124, 250, vpMax, vhMax), block: fluidWH(148, 190, vpMax, vhMax) },
+        2: { col: fluid(136, 280, vpMax), avatar: fluidWH(74, 145, vpMax, vhMax), ring: fluidWH(96, 190, vpMax, vhMax), block: fluidWH(104, 132, vpMax, vhMax) },
+        3: { col: fluid(136, 280, vpMax), avatar: fluidWH(74, 145, vpMax, vhMax), ring: fluidWH(96, 190, vpMax, vhMax), block: fluidWH(76, 97, vpMax, vhMax) },
+      }[rank]
+    : {
+        1: { col: fluid(132, 240, vpMax), avatar: fluid(72, 120, vpMax), ring: fluid(92, 160, vpMax), block: fluid(92, 195, vpMax) },
+        2: { col: fluid(104, 190, vpMax), avatar: fluid(56, 96, vpMax), ring: fluid(72, 128, vpMax), block: fluid(64, 135, vpMax) },
+        3: { col: fluid(104, 190, vpMax), avatar: fluid(56, 96, vpMax), ring: fluid(72, 128, vpMax), block: fluid(46, 100, vpMax) },
+      }[rank];
+
+  const nameSize = large ? fluidWH(16, 30, vpMax, vhMax) : fluid(12, 20, vpMax);
+  const tagSize = large ? fluidWH(13, 22, vpMax, vhMax) : fluid(11, 16, vpMax);
+  const quoteSize = large ? fluidWH(12, 19, vpMax, vhMax) : fluid(10, 14, vpMax);
+  const digitSize = large ? fluidWH(44, 60, vpMax, vhMax) : fluid(28, 56, vpMax);
+  const stickerSize = large ? fluidWH(22, 42, vpMax, vhMax) : fluid(16, 30, vpMax);
+
+  return (
+    <div
+      className="relative flex origin-bottom flex-col items-center opacity-0"
+      style={{ width: sizes.col, animation: `podium-rise 0.7s ease-out ${RISE_DELAY_MS[rank]}ms both` }}
+    >
+      <div className="relative" style={{ width: sizes.ring, height: sizes.ring }}>
+        <div
+          className="absolute inset-0 rounded-full"
+          style={{ boxShadow: `0 0 0 3px ${style.ring}, 0 0 24px ${style.glow}` }}
+          aria-hidden
+        />
+        <div className="absolute inset-[6%] overflow-hidden rounded-full">
+          <Link href={profileHref}>
+            <SellerAvatar photoPath={entry.photoPath} name={entry.name} size={sizes.avatar} />
+          </Link>
+        </div>
+        <span
+          className="absolute -top-1 -right-1 leading-none select-none"
+          style={{ fontSize: stickerSize, filter: `drop-shadow(0 2px 4px ${style.glow})` }}
+          aria-hidden
+        >
+          {flavor.sticker}
+        </span>
+      </div>
+
+      <div
+        className="relative mt-3 max-w-full rounded-lg px-3 py-1.5 text-center"
+        style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${style.ring}4d` }}
+      >
+        <Link
+          href={profileHref}
+          className="block truncate font-semibold text-neutral-50 hover:text-neutral-200"
+          style={{ fontSize: nameSize }}
+        >
+          {entry.name}
+        </Link>
+        <p className="font-medium" style={{ fontSize: tagSize, color: style.ring }}>
+          {flavor.tag}
+        </p>
+      </div>
+
+      <p
+        className="mt-1.5 max-w-full truncate text-center text-neutral-400 italic"
+        style={{ fontSize: quoteSize }}
+      >
+        “{flavor.quote}”
+      </p>
+
+      <div
+        className="relative mt-3 flex w-full flex-col items-center"
+        style={{ filter: `drop-shadow(0 8px 18px ${style.glow})` }}
+      >
+        {isChampion && (
+          <div className="mb-1 flex items-center gap-1" style={{ color: style.ring }} aria-hidden>
+            <LaurelBranch color={style.ring} />
+            <span className="text-sm">🏅</span>
+            <LaurelBranch flip color={style.ring} />
+          </div>
+        )}
+        <div className="w-full overflow-hidden rounded-t-md" style={{ height: sizes.block }}>
+          <div className="h-[14%] w-full" style={{ background: style.top }} aria-hidden />
+          <div
+            className="flex h-[86%] w-full items-center justify-center"
+            style={{ background: style.front }}
+          >
+            <span
+              className="leading-none font-black text-white/90 select-none"
+              style={{ fontFamily: "var(--font-arena-display)", fontSize: digitSize }}
+            >
+              {rank}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ZoeiraHeader({ large }: { large?: boolean }) {
+  return (
+    <div className="relative mb-1 flex w-full items-center justify-center px-4 pt-1 text-center">
+      <span
+        className="pointer-events-none absolute top-2 left-2 hidden -rotate-6 text-neutral-500 lg:block"
+        style={{ fontFamily: "var(--font-zoeira-doodle)", fontSize: large ? "1.4rem" : "1.1rem" }}
+        aria-hidden
+      >
+        meta é só o começo
+      </span>
+      <span
+        className="pointer-events-none absolute top-2 right-2 hidden rotate-3 text-neutral-500 lg:block"
+        style={{ fontFamily: "var(--font-zoeira-doodle)", fontSize: large ? "1.4rem" : "1.1rem" }}
+        aria-hidden
+      >
+        CRM nunca esquece
+      </span>
+      <div>
+        <h2
+          className="font-black tracking-tight text-neutral-50"
+          style={{ fontSize: large ? "2.75rem" : "1.5rem" }}
+        >
+          Pódio da <span className="text-blue-400">Zoeira</span> 👑
+        </h2>
+        <p className={large ? "mt-1 text-base text-neutral-400" : "mt-0.5 text-xs text-neutral-400"}>
+          vender também pode ser divertido 😎
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function Podium({
   entries,
   periodId,
@@ -361,59 +572,84 @@ export function Podium({
   const hrefFor = (sellerId: string) =>
     periodId ? `/sellers/${sellerId}?period=${periodId}` : `/sellers/${sellerId}`;
 
-  const PodiumColumn = theme === "game" ? PodiumColumnGame : PodiumColumnDefault;
+  const isGame = theme === "game";
+  const isZoeira = theme === "zoeira";
+  const isFancy = isGame || isZoeira;
+
+  const PodiumColumn = isGame ? PodiumColumnGame : isZoeira ? PodiumColumnZoeira : PodiumColumnDefault;
   const spacerClass = large ? "w-48 sm:w-56" : "w-28 sm:w-36";
-  const gameVpMax = large ? 2000 : 2200;
-  const gameVhMax = 1080;
-  const gameSpacerWidth = large ? fluid(136, 280, gameVpMax) : fluid(104, 190, gameVpMax);
+  const fancyVpMax = large ? 2000 : 2200;
+  const fancyVhMax = 1080;
+  const fancySpacerWidth = large ? fluid(136, 280, fancyVpMax) : fluid(104, 190, fancyVpMax);
 
-  const containerClass =
-    theme === "game"
-      ? "relative mx-auto flex w-fit max-w-full items-end justify-center overflow-hidden rounded-2xl bg-[#0b1130]"
-      : large
-        ? "relative flex items-end justify-center gap-10 overflow-hidden rounded-2xl bg-neutral-900 px-10 pt-12 pb-0 sm:gap-16"
-        : "relative flex items-end justify-center gap-4 overflow-hidden rounded-2xl bg-neutral-900 px-6 pt-8 pb-0 sm:gap-8";
-
-  const containerStyle =
-    theme === "game"
-      ? {
-          gap: large ? fluidWH(24, 45, gameVpMax, gameVhMax) : fluid(16, 34, gameVpMax),
-          paddingLeft: large ? fluid(32, 58, gameVpMax) : fluid(20, 44, gameVpMax),
-          paddingRight: large ? fluid(32, 58, gameVpMax) : fluid(20, 44, gameVpMax),
-          paddingTop: large ? fluidWH(56, 90, gameVpMax, gameVhMax) : fluid(56, 104, gameVpMax),
-        }
-      : undefined;
-
-  const glowBackground =
-    theme === "game"
-      ? "radial-gradient(ellipse 560px 320px at 50% 0%, rgba(255,183,39,0.16), transparent 70%)"
-      : "radial-gradient(ellipse 480px 260px at 50% 0%, rgba(251,191,36,0.10), transparent 70%)";
-
-  return (
-    <div className={containerClass} style={containerStyle}>
-      <div className="pointer-events-none absolute inset-0" style={{ background: glowBackground }} />
-      {theme === "game" && (
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.06]"
-          style={{
-            backgroundImage:
-              "linear-gradient(#8fb2ff 1px, transparent 1px), linear-gradient(90deg, #8fb2ff 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
-          }}
-        />
-      )}
+  const row = (
+    <div
+      className="flex items-end justify-center"
+      style={{ gap: large ? fluidWH(24, 45, fancyVpMax, fancyVhMax) : fluid(16, 34, fancyVpMax) }}
+    >
       {second ? (
         <PodiumColumn entry={second} rank={2} profileHref={hrefFor(second.sellerId)} large={large} />
-      ) : theme === "game" ? (
-        <div style={{ width: gameSpacerWidth }} />
+      ) : (
+        <div style={{ width: fancySpacerWidth }} />
+      )}
+      <PodiumColumn entry={first} rank={1} profileHref={hrefFor(first.sellerId)} large={large} />
+      {third ? (
+        <PodiumColumn entry={third} rank={3} profileHref={hrefFor(third.sellerId)} large={large} />
+      ) : (
+        <div style={{ width: fancySpacerWidth }} />
+      )}
+    </div>
+  );
+
+  if (isFancy) {
+    const containerClass = `relative mx-auto flex w-fit max-w-full flex-col overflow-hidden rounded-2xl ${
+      isZoeira ? "bg-[#05070f]" : "bg-[#0b1130]"
+    }`;
+    const containerStyle = {
+      paddingLeft: large ? fluid(32, 58, fancyVpMax) : fluid(20, 44, fancyVpMax),
+      paddingRight: large ? fluid(32, 58, fancyVpMax) : fluid(20, 44, fancyVpMax),
+      paddingTop: large ? fluidWH(56, 90, fancyVpMax, fancyVhMax) : fluid(56, 104, fancyVpMax),
+      paddingBottom: large ? fluid(24, 40, fancyVpMax) : fluid(16, 28, fancyVpMax),
+    };
+    const glowBackground = isZoeira
+      ? "radial-gradient(ellipse 300px 260px at 20% 60%, rgba(34,211,238,0.10), transparent 65%), radial-gradient(ellipse 300px 260px at 80% 60%, rgba(255,122,89,0.10), transparent 65%), radial-gradient(ellipse 480px 300px at 50% 15%, rgba(255,207,64,0.14), transparent 70%)"
+      : "radial-gradient(ellipse 560px 320px at 50% 0%, rgba(255,183,39,0.16), transparent 70%)";
+
+    return (
+      <div className={containerClass} style={containerStyle}>
+        <div className="pointer-events-none absolute inset-0" style={{ background: glowBackground }} />
+        {isGame && (
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.06]"
+            style={{
+              backgroundImage:
+                "linear-gradient(#8fb2ff 1px, transparent 1px), linear-gradient(90deg, #8fb2ff 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+            }}
+          />
+        )}
+        {isZoeira && <ZoeiraHeader large={large} />}
+        {row}
+      </div>
+    );
+  }
+
+  const containerClass = large
+    ? "relative flex items-end justify-center gap-10 overflow-hidden rounded-2xl bg-neutral-900 px-10 pt-12 pb-0 sm:gap-16"
+    : "relative flex items-end justify-center gap-4 overflow-hidden rounded-2xl bg-neutral-900 px-6 pt-8 pb-0 sm:gap-8";
+  const glowBackground = "radial-gradient(ellipse 480px 260px at 50% 0%, rgba(251,191,36,0.10), transparent 70%)";
+
+  return (
+    <div className={containerClass}>
+      <div className="pointer-events-none absolute inset-0" style={{ background: glowBackground }} />
+      {second ? (
+        <PodiumColumn entry={second} rank={2} profileHref={hrefFor(second.sellerId)} large={large} />
       ) : (
         <div className={spacerClass} />
       )}
       <PodiumColumn entry={first} rank={1} profileHref={hrefFor(first.sellerId)} large={large} />
       {third ? (
         <PodiumColumn entry={third} rank={3} profileHref={hrefFor(third.sellerId)} large={large} />
-      ) : theme === "game" ? (
-        <div style={{ width: gameSpacerWidth }} />
       ) : (
         <div className={spacerClass} />
       )}
