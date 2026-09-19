@@ -317,8 +317,8 @@ export function Podium({
   const containerClass =
     theme === "game"
       ? large
-        ? "relative flex items-end justify-center gap-6 overflow-hidden rounded-2xl bg-[#0b1130] px-8 pt-20 pb-0 sm:gap-10"
-        : "relative flex items-end justify-center gap-3 overflow-hidden rounded-2xl bg-[#0b1130] px-5 pt-16 pb-0 sm:gap-5"
+        ? "relative mx-auto flex w-fit max-w-full items-end justify-center gap-8 overflow-hidden rounded-2xl bg-[#0b1130] px-12 pt-20 pb-0 sm:gap-12"
+        : "relative mx-auto flex w-fit max-w-full items-end justify-center gap-4 overflow-hidden rounded-2xl bg-[#0b1130] px-7 pt-16 pb-0 sm:gap-6"
       : large
         ? "relative flex items-end justify-center gap-10 overflow-hidden rounded-2xl bg-neutral-900 px-10 pt-12 pb-0 sm:gap-16"
         : "relative flex items-end justify-center gap-4 overflow-hidden rounded-2xl bg-neutral-900 px-6 pt-8 pb-0 sm:gap-8";
