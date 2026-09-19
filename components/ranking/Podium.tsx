@@ -533,31 +533,40 @@ function PodiumColumnZoeira({
   );
 }
 
-function ZoeiraHeader({ large }: { large?: boolean }) {
+function ZoeiraHeader({
+  large,
+  vpMax,
+  vhMax,
+}: {
+  large?: boolean;
+  vpMax: number;
+  vhMax: number;
+}) {
+  const titleSize = large ? fluidWH(18, 30, vpMax, vhMax) : "1.5rem";
+  const subtitleSize = large ? fluidWH(11, 14, vpMax, vhMax) : "0.75rem";
+  const doodleSize = large ? fluidWH(12, 17, vpMax, vhMax) : "1.1rem";
+
   return (
-    <div className="relative mb-1 flex w-full items-center justify-center px-4 pt-1 text-center">
+    <div className="relative mb-2 flex w-full items-center justify-center px-4 text-center">
       <span
-        className="pointer-events-none absolute top-2 left-2 hidden -rotate-6 text-neutral-500 lg:block"
-        style={{ fontFamily: "var(--font-zoeira-doodle)", fontSize: large ? "1.4rem" : "1.1rem" }}
+        className="pointer-events-none absolute top-0 left-2 hidden -rotate-6 text-neutral-500 lg:block"
+        style={{ fontFamily: "var(--font-zoeira-doodle)", fontSize: doodleSize }}
         aria-hidden
       >
         meta é só o começo
       </span>
       <span
-        className="pointer-events-none absolute top-2 right-2 hidden rotate-3 text-neutral-500 lg:block"
-        style={{ fontFamily: "var(--font-zoeira-doodle)", fontSize: large ? "1.4rem" : "1.1rem" }}
+        className="pointer-events-none absolute top-0 right-2 hidden rotate-3 text-neutral-500 lg:block"
+        style={{ fontFamily: "var(--font-zoeira-doodle)", fontSize: doodleSize }}
         aria-hidden
       >
         CRM nunca esquece
       </span>
       <div>
-        <h2
-          className="font-black tracking-tight text-neutral-50"
-          style={{ fontSize: large ? "2.75rem" : "1.5rem" }}
-        >
+        <h2 className="font-black tracking-tight text-neutral-50" style={{ fontSize: titleSize }}>
           Ranking de <span className="text-blue-400">Vendas</span> 👑
         </h2>
-        <p className={large ? "mt-1 text-base text-neutral-400" : "mt-0.5 text-xs text-neutral-400"}>
+        <p className="text-neutral-400" style={{ fontSize: subtitleSize }}>
           Foco na meta. Olho no topo.
         </p>
       </div>
@@ -615,13 +624,19 @@ export function Podium({
   );
 
   if (isFancy) {
-    const containerClass = `relative mx-auto flex w-fit max-w-full flex-col overflow-hidden rounded-2xl ${
+    const containerClass = `relative mx-auto flex w-fit max-w-full shrink-0 flex-col overflow-hidden rounded-2xl ${
       isZoeira ? "bg-[#05070f]" : "bg-[#0b1130]"
     }`;
     const containerStyle = {
       paddingLeft: large ? fluid(32, 58, fancyVpMax) : fluid(20, 44, fancyVpMax),
       paddingRight: large ? fluid(32, 58, fancyVpMax) : fluid(20, 44, fancyVpMax),
-      paddingTop: large ? fluidWH(56, 90, fancyVpMax, fancyVhMax) : fluid(56, 104, fancyVpMax),
+      paddingTop: isZoeira
+        ? large
+          ? fluidWH(16, 24, fancyVpMax, fancyVhMax)
+          : fluid(16, 28, fancyVpMax)
+        : large
+          ? fluidWH(56, 90, fancyVpMax, fancyVhMax)
+          : fluid(56, 104, fancyVpMax),
       paddingBottom: large ? fluid(24, 40, fancyVpMax) : fluid(16, 28, fancyVpMax),
     };
     const glowBackground = isZoeira
@@ -641,7 +656,7 @@ export function Podium({
             }}
           />
         )}
-        {isZoeira && <ZoeiraHeader large={large} />}
+        {isZoeira && <ZoeiraHeader large={large} vpMax={fancyVpMax} vhMax={fancyVhMax} />}
         {row}
       </div>
     );
