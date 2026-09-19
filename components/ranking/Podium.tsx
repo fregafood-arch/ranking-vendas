@@ -426,14 +426,14 @@ function PodiumColumnZoeira({
   const vhMax = 1080;
   const sizes = large
     ? {
-        1: { col: fluid(176, 364, vpMax), avatar: fluidWH(96, 190, vpMax, vhMax), ring: fluidWH(124, 250, vpMax, vhMax), block: fluidWH(148, 190, vpMax, vhMax) },
-        2: { col: fluid(136, 280, vpMax), avatar: fluidWH(74, 145, vpMax, vhMax), ring: fluidWH(96, 190, vpMax, vhMax), block: fluidWH(104, 132, vpMax, vhMax) },
-        3: { col: fluid(136, 280, vpMax), avatar: fluidWH(74, 145, vpMax, vhMax), ring: fluidWH(96, 190, vpMax, vhMax), block: fluidWH(76, 97, vpMax, vhMax) },
+        1: { col: fluid(176, 364, vpMax), ring: fluidWH(124, 250, vpMax, vhMax), block: fluidWH(148, 190, vpMax, vhMax) },
+        2: { col: fluid(136, 280, vpMax), ring: fluidWH(96, 190, vpMax, vhMax), block: fluidWH(104, 132, vpMax, vhMax) },
+        3: { col: fluid(136, 280, vpMax), ring: fluidWH(96, 190, vpMax, vhMax), block: fluidWH(76, 97, vpMax, vhMax) },
       }[rank]
     : {
-        1: { col: fluid(132, 240, vpMax), avatar: fluid(72, 120, vpMax), ring: fluid(92, 160, vpMax), block: fluid(92, 195, vpMax) },
-        2: { col: fluid(104, 190, vpMax), avatar: fluid(56, 96, vpMax), ring: fluid(72, 128, vpMax), block: fluid(64, 135, vpMax) },
-        3: { col: fluid(104, 190, vpMax), avatar: fluid(56, 96, vpMax), ring: fluid(72, 128, vpMax), block: fluid(46, 100, vpMax) },
+        1: { col: fluid(132, 240, vpMax), ring: fluid(92, 160, vpMax), block: fluid(92, 195, vpMax) },
+        2: { col: fluid(104, 190, vpMax), ring: fluid(72, 128, vpMax), block: fluid(64, 135, vpMax) },
+        3: { col: fluid(104, 190, vpMax), ring: fluid(72, 128, vpMax), block: fluid(46, 100, vpMax) },
       }[rank];
 
   const nameSize = large ? fluidWH(16, 30, vpMax, vhMax) : fluid(12, 20, vpMax);
@@ -453,11 +453,9 @@ function PodiumColumnZoeira({
           style={{ boxShadow: `0 0 0 3px ${style.ring}, 0 0 24px ${style.glow}` }}
           aria-hidden
         />
-        <div className="absolute inset-[6%] overflow-hidden rounded-full">
-          <Link href={profileHref}>
-            <SellerAvatar photoPath={entry.photoPath} name={entry.name} size={sizes.avatar} />
-          </Link>
-        </div>
+        <Link href={profileHref} className="absolute inset-[6%] block overflow-hidden rounded-full">
+          <SellerAvatar photoPath={entry.photoPath} name={entry.name} size="100%" />
+        </Link>
         <span
           className="absolute -top-1 -right-1 leading-none select-none"
           style={{ fontSize: stickerSize, filter: `drop-shadow(0 2px 4px ${style.glow})` }}
