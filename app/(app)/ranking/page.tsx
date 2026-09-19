@@ -91,20 +91,55 @@ export default async function RankingPage({
 
       <IndicatorFilterTabs indicators={indicators ?? []} activeIndicatorId={null} periodId={periodId} />
 
-      <Podium
-        periodId={periodId}
-        theme={theme}
-        entries={rows.slice(0, 3).map((row) => ({
-          sellerId: row.sellerId,
-          name: row.name,
-          photoPath: row.photoPath,
-          resultLabel: row.resultLabel,
-          percent: row.percent,
-        }))}
-      />
+      <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-start">
+        <Podium
+          periodId={periodId}
+          theme={theme}
+          entries={rows.slice(0, 3).map((row) => ({
+            sellerId: row.sellerId,
+            name: row.name,
+            photoPath: row.photoPath,
+            resultLabel: row.resultLabel,
+            percent: row.percent,
+          }))}
+        />
+
+        {rows.length > 3 && (
+          <aside className="hidden w-full min-w-[260px] rounded-2xl bg-neutral-900 p-3 lg:block lg:flex-1">
+            <h2 className="mb-1 px-2 pt-1 text-sm font-medium text-neutral-400">Próximos colocados</h2>
+            <div className="space-y-0.5">
+              {rows.slice(3).map((row) => (
+                <Link
+                  key={row.sellerId}
+                  href={`/sellers/${row.sellerId}?period=${periodId}`}
+                  className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-neutral-800/60"
+                >
+                  <span className="w-6 shrink-0 text-center text-sm font-semibold text-neutral-500">
+                    {row.rank}º
+                  </span>
+                  <SellerAvatar photoPath={row.photoPath} name={row.name} size={36} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-neutral-100">{row.name}</p>
+                    <p className="truncate text-xs text-neutral-500">{row.resultLabel}</p>
+                  </div>
+                  <span
+                    className={
+                      row.percent >= 100
+                        ? "shrink-0 text-sm font-semibold text-emerald-400"
+                        : "shrink-0 text-sm font-semibold text-neutral-300"
+                    }
+                  >
+                    {row.percent.toFixed(0)}%
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </aside>
+        )}
+      </div>
 
       {rows.length > 3 && (
-        <div className="overflow-x-auto rounded-2xl bg-neutral-900">
+        <div className="overflow-x-auto rounded-2xl bg-neutral-900 lg:hidden">
           <table className="w-full text-left text-sm">
             <thead className="text-neutral-500">
               <tr>
