@@ -116,6 +116,18 @@ const GAME_STYLES: Record<
 
 const HEX_CLIP = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
 
+/**
+ * Tamanho que cresce de verdade com a largura da tela (CSS clamp), em vez
+ * de ficar travado num pixel fixo -- é o que faz o pódio da skin Arena se
+ * ajustar numa tela grande / TV em vez de ficar pequeno e centralizado
+ * num mar de vazio. `viewportForMax` é a largura de viewport em que o
+ * valor atinge o teto (`max`); antes disso cresce, depois disso satura.
+ */
+function fluid(min: number, max: number, viewportForMax: number) {
+  const vw = +((max / viewportForMax) * 100).toFixed(2);
+  return `clamp(${min}px, ${vw}vw, ${max}px)`;
+}
+
 const SPARKS = [
   { left: "6%", bottom: "8%", delay: "0s", size: 5 },
   { left: "88%", bottom: "22%", delay: "0.6s", size: 4 },
@@ -124,9 +136,13 @@ const SPARKS = [
   { left: "78%", bottom: "55%", delay: "0.3s", size: 5 },
 ];
 
-function Crown({ width }: { width: number }) {
+function Crown({ size }: { size: string }) {
   return (
-    <svg width={width} height={width * 0.6} viewBox="0 0 48 30" className="drop-shadow-[0_0_6px_rgba(255,183,39,0.7)]">
+    <svg
+      viewBox="0 0 48 30"
+      style={{ width: size, aspectRatio: "48 / 30" }}
+      className="drop-shadow-[0_0_6px_rgba(255,183,39,0.7)]"
+    >
       <path
         d="M2 27 L2 12 L14 20 L24 4 L34 20 L46 12 L46 27 Z"
         fill="url(#arena-crown-gradient)"
@@ -183,26 +199,40 @@ function PodiumColumnGame({
   const style = GAME_STYLES[rank];
   const isChampion = rank === 1;
 
-  const colWidth = large
-    ? { 1: 176, 2: 136, 3: 136 }[rank]
-    : { 1: 132, 2: 104, 3: 104 }[rank];
-  const hexSize = large ? { 1: 124, 2: 96, 3: 96 }[rank] : { 1: 92, 2: 72, 3: 72 }[rank];
-  const avatarSize = large ? { 1: 88, 2: 66, 3: 66 }[rank] : { 1: 64, 2: 48, 3: 48 }[rank];
-  const pedestalHeight = large
-    ? { 1: 148, 2: 104, 3: 76 }[rank]
-    : { 1: 92, 2: 64, 3: 46 }[rank];
+  // viewportForMax: até que largura de tela o tamanho continua crescendo.
+  // No modo TV (large), o pódio ocupa a tela toda, então cresce até telas
+  // bem maiores (TVs 4K); na tela de Ranking (embutida numa página com
+  // nav e lista ao lado) satura um pouco antes, mas ainda cresce bastante
+  // ao longo de larguras normais de monitor (não só até notebook).
+  const vpMax = large ? 3200 : 2200;
+  const sizes = large
+    ? {
+        1: { col: fluid(176, 320, vpMax), hex: fluid(124, 225, vpMax), avatar: fluid(88, 155, vpMax), pedestal: fluid(148, 270, vpMax) },
+        2: { col: fluid(136, 245, vpMax), hex: fluid(96, 170, vpMax), avatar: fluid(66, 118, vpMax), pedestal: fluid(104, 185, vpMax) },
+        3: { col: fluid(136, 245, vpMax), hex: fluid(96, 170, vpMax), avatar: fluid(66, 118, vpMax), pedestal: fluid(76, 135, vpMax) },
+      }[rank]
+    : {
+        1: { col: fluid(132, 240, vpMax), hex: fluid(92, 165, vpMax), avatar: fluid(64, 115, vpMax), pedestal: fluid(92, 195, vpMax) },
+        2: { col: fluid(104, 190, vpMax), hex: fluid(72, 128, vpMax), avatar: fluid(48, 88, vpMax), pedestal: fluid(64, 135, vpMax) },
+        3: { col: fluid(104, 190, vpMax), hex: fluid(72, 128, vpMax), avatar: fluid(48, 88, vpMax), pedestal: fluid(46, 100, vpMax) },
+      }[rank];
+
+  const crownSize = large ? fluid(52, 95, vpMax) : fluid(38, 68, vpMax);
+  const nameSize = large ? fluid(16, 28, vpMax) : fluid(12, 20, vpMax);
+  const percentSize = large ? fluid(18, 32, vpMax) : fluid(14, 22, vpMax);
+  const digitSize = large ? fluid(44, 80, vpMax) : fluid(28, 56, vpMax);
 
   return (
     <div
       className="relative flex origin-bottom flex-col items-center opacity-0"
-      style={{ width: colWidth, animation: `podium-rise 0.7s ease-out ${RISE_DELAY_MS[rank]}ms both` }}
+      style={{ width: sizes.col, animation: `podium-rise 0.7s ease-out ${RISE_DELAY_MS[rank]}ms both` }}
     >
       {isChampion && (
         <div
           className="pointer-events-none absolute top-[-14%] left-1/2 -translate-x-1/2"
           style={{
-            width: large ? 240 : 175,
-            height: large ? 300 : 220,
+            width: large ? fluid(240, 340, vpMax) : fluid(175, 235, vpMax),
+            height: large ? fluid(300, 425, vpMax) : fluid(220, 295, vpMax),
             background: "linear-gradient(180deg, rgba(255,201,74,0.28), rgba(255,201,74,0) 78%)",
             clipPath: "polygon(42% 0%, 58% 0%, 100% 100%, 0% 100%)",
           }}
@@ -212,7 +242,7 @@ function PodiumColumnGame({
 
       <div className="relative flex flex-col items-center">
         {isChampion ? (
-          <Crown width={large ? 52 : 38} />
+          <Crown size={crownSize} />
         ) : (
           <div
             className="h-3.5 w-3.5 rotate-45 rounded-sm"
@@ -220,7 +250,7 @@ function PodiumColumnGame({
           />
         )}
 
-        <div className="relative mt-1" style={{ width: hexSize, height: hexSize }}>
+        <div className="relative mt-1" style={{ width: sizes.hex, height: sizes.hex }}>
           {isChampion && (
             <div
               className="arena-ring-spin pointer-events-none absolute inset-[-14%] rounded-full"
@@ -233,7 +263,7 @@ function PodiumColumnGame({
             style={{ background: style.medallion, clipPath: HEX_CLIP, boxShadow: `0 0 28px ${style.glow}` }}
           >
             <Link href={profileHref} className="rounded-full ring-4" style={{ ["--tw-ring-color" as string]: style.ring }}>
-              <SellerAvatar photoPath={entry.photoPath} name={entry.name} size={avatarSize} />
+              <SellerAvatar photoPath={entry.photoPath} name={entry.name} size={sizes.avatar} />
             </Link>
           </div>
           {isChampion && <SparkField color={style.ring} />}
@@ -258,13 +288,14 @@ function PodiumColumnGame({
         )}
         <Link
           href={profileHref}
-          className={`relative block truncate font-semibold text-neutral-50 hover:text-emerald-300 ${large ? "text-base" : "text-xs"}`}
+          className="relative block truncate font-semibold text-neutral-50 hover:text-emerald-300"
+          style={{ fontSize: nameSize }}
         >
           {entry.name}
         </Link>
         <p
-          className={`relative font-bold ${large ? "text-lg" : "text-sm"}`}
-          style={{ fontFamily: "var(--font-arena-display)", color: style.ring }}
+          className="relative font-bold"
+          style={{ fontFamily: "var(--font-arena-display)", color: style.ring, fontSize: percentSize }}
         >
           {entry.percent.toFixed(0)}%
         </p>
@@ -276,12 +307,12 @@ function PodiumColumnGame({
 
       <div
         className="relative mt-3 flex w-full items-start justify-center overflow-hidden rounded-t-md"
-        style={{ height: pedestalHeight, background: style.pedestal, boxShadow: `0 0 22px ${style.glow}` }}
+        style={{ height: sizes.pedestal, background: style.pedestal, boxShadow: `0 0 22px ${style.glow}` }}
       >
         <div className="absolute inset-x-0 top-0 h-[3px] bg-white/55" aria-hidden />
         <span
           className="mt-1 leading-none font-black text-black/25 select-none"
-          style={{ fontFamily: "var(--font-arena-display)", fontSize: large ? 44 : 28 }}
+          style={{ fontFamily: "var(--font-arena-display)", fontSize: digitSize }}
         >
           {rank}
         </span>
@@ -312,16 +343,25 @@ export function Podium({
 
   const PodiumColumn = theme === "game" ? PodiumColumnGame : PodiumColumnDefault;
   const spacerClass = large ? "w-48 sm:w-56" : "w-28 sm:w-36";
-  const gameSpacerWidth = large ? 136 : 104;
+  const gameVpMax = large ? 3200 : 2200;
+  const gameSpacerWidth = large ? fluid(136, 245, gameVpMax) : fluid(104, 190, gameVpMax);
 
   const containerClass =
     theme === "game"
-      ? large
-        ? "relative mx-auto flex w-fit max-w-full items-end justify-center gap-8 overflow-hidden rounded-2xl bg-[#0b1130] px-12 pt-20 pb-0 sm:gap-12"
-        : "relative mx-auto flex w-fit max-w-full items-end justify-center gap-4 overflow-hidden rounded-2xl bg-[#0b1130] px-7 pt-16 pb-0 sm:gap-6"
+      ? "relative mx-auto flex w-fit max-w-full items-end justify-center overflow-hidden rounded-2xl bg-[#0b1130]"
       : large
         ? "relative flex items-end justify-center gap-10 overflow-hidden rounded-2xl bg-neutral-900 px-10 pt-12 pb-0 sm:gap-16"
         : "relative flex items-end justify-center gap-4 overflow-hidden rounded-2xl bg-neutral-900 px-6 pt-8 pb-0 sm:gap-8";
+
+  const containerStyle =
+    theme === "game"
+      ? {
+          gap: large ? fluid(24, 52, gameVpMax) : fluid(16, 34, gameVpMax),
+          paddingLeft: large ? fluid(32, 64, gameVpMax) : fluid(20, 44, gameVpMax),
+          paddingRight: large ? fluid(32, 64, gameVpMax) : fluid(20, 44, gameVpMax),
+          paddingTop: large ? fluid(72, 140, gameVpMax) : fluid(56, 104, gameVpMax),
+        }
+      : undefined;
 
   const glowBackground =
     theme === "game"
@@ -329,7 +369,7 @@ export function Podium({
       : "radial-gradient(ellipse 480px 260px at 50% 0%, rgba(251,191,36,0.10), transparent 70%)";
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} style={containerStyle}>
       <div className="pointer-events-none absolute inset-0" style={{ background: glowBackground }} />
       {theme === "game" && (
         <div
