@@ -220,7 +220,10 @@ function PodiumColumnGame({
   // coroa/anel do 1º lugar saem cortados por cima. Por isso as peças que
   // empilham verticalmente (medalhão, avatar, pedestal, coroa, fontes)
   // usam min(vw, vh): crescem com o menor dos dois, largura ou altura.
-  const vpMax = large ? 2000 : 1600;
+  // No Ranking (admin) o pódio é só mais um elemento da página, ao lado da
+  // lista -- não precisa (nem deve) dominar a tela como no Modo TV, então
+  // cresce bem mais modestamente.
+  const vpMax = large ? 2000 : 2200;
   const vhMax = 1080;
   const sizes = large
     ? {
@@ -229,15 +232,15 @@ function PodiumColumnGame({
         3: { col: fluid(136, 280, vpMax), hex: fluidWH(96, 195, vpMax, vhMax), avatar: fluidWH(66, 132, vpMax, vhMax), pedestal: fluidWH(76, 97, vpMax, vhMax) },
       }[rank]
     : {
-        1: { col: fluid(132, 440, vpMax), hex: fluid(92, 300, vpMax), avatar: fluid(64, 210, vpMax), pedestal: fluid(92, 340, vpMax) },
-        2: { col: fluid(104, 350, vpMax), hex: fluid(72, 230, vpMax), avatar: fluid(48, 160, vpMax), pedestal: fluid(64, 240, vpMax) },
-        3: { col: fluid(104, 350, vpMax), hex: fluid(72, 230, vpMax), avatar: fluid(48, 160, vpMax), pedestal: fluid(46, 180, vpMax) },
+        1: { col: fluid(132, 240, vpMax), hex: fluid(92, 165, vpMax), avatar: fluid(64, 115, vpMax), pedestal: fluid(92, 195, vpMax) },
+        2: { col: fluid(104, 190, vpMax), hex: fluid(72, 128, vpMax), avatar: fluid(48, 88, vpMax), pedestal: fluid(64, 135, vpMax) },
+        3: { col: fluid(104, 190, vpMax), hex: fluid(72, 128, vpMax), avatar: fluid(48, 88, vpMax), pedestal: fluid(46, 100, vpMax) },
       }[rank];
 
-  const crownSize = large ? fluidWH(52, 96, vpMax, vhMax) : fluid(38, 120, vpMax);
-  const nameSize = large ? fluidWH(16, 30, vpMax, vhMax) : fluid(12, 34, vpMax);
-  const percentSize = large ? fluidWH(18, 34, vpMax, vhMax) : fluid(14, 38, vpMax);
-  const digitSize = large ? fluidWH(44, 60, vpMax, vhMax) : fluid(28, 95, vpMax);
+  const crownSize = large ? fluidWH(52, 96, vpMax, vhMax) : fluid(38, 68, vpMax);
+  const nameSize = large ? fluidWH(16, 30, vpMax, vhMax) : fluid(12, 20, vpMax);
+  const percentSize = large ? fluidWH(18, 34, vpMax, vhMax) : fluid(14, 22, vpMax);
+  const digitSize = large ? fluidWH(44, 60, vpMax, vhMax) : fluid(28, 56, vpMax);
 
   return (
     <div
@@ -360,9 +363,9 @@ export function Podium({
 
   const PodiumColumn = theme === "game" ? PodiumColumnGame : PodiumColumnDefault;
   const spacerClass = large ? "w-48 sm:w-56" : "w-28 sm:w-36";
-  const gameVpMax = large ? 2000 : 1600;
+  const gameVpMax = large ? 2000 : 2200;
   const gameVhMax = 1080;
-  const gameSpacerWidth = large ? fluid(136, 280, gameVpMax) : fluid(104, 350, gameVpMax);
+  const gameSpacerWidth = large ? fluid(136, 280, gameVpMax) : fluid(104, 190, gameVpMax);
 
   const containerClass =
     theme === "game"
@@ -374,10 +377,10 @@ export function Podium({
   const containerStyle =
     theme === "game"
       ? {
-          gap: large ? fluidWH(24, 45, gameVpMax, gameVhMax) : fluid(16, 52, gameVpMax),
-          paddingLeft: large ? fluid(32, 58, gameVpMax) : fluid(20, 64, gameVpMax),
-          paddingRight: large ? fluid(32, 58, gameVpMax) : fluid(20, 64, gameVpMax),
-          paddingTop: large ? fluidWH(56, 90, gameVpMax, gameVhMax) : fluid(56, 140, gameVpMax),
+          gap: large ? fluidWH(24, 45, gameVpMax, gameVhMax) : fluid(16, 34, gameVpMax),
+          paddingLeft: large ? fluid(32, 58, gameVpMax) : fluid(20, 44, gameVpMax),
+          paddingRight: large ? fluid(32, 58, gameVpMax) : fluid(20, 44, gameVpMax),
+          paddingTop: large ? fluidWH(56, 90, gameVpMax, gameVhMax) : fluid(56, 104, gameVpMax),
         }
       : undefined;
 
