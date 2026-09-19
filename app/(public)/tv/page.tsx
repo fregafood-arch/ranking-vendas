@@ -4,6 +4,7 @@ import { Podium } from "@/components/ranking/Podium";
 import { TVRankingRow } from "@/components/tv/TVRankingRow";
 import { TVModeClient } from "@/components/tv/TVModeClient";
 import { formatIndicatorValue } from "@/lib/format";
+import { getActiveTheme } from "@/lib/theme";
 
 // Dados sempre ao vivo (login de conta de serviço + leitura em tempo real);
 // nunca deve virar HTML estático gerado em build time.
@@ -43,6 +44,7 @@ export default async function TvModePage() {
     ranking,
     attainment,
     { data: sellers },
+    theme,
   ] = await Promise.all([
     supabase.from("indicators").select("id, name, unit").eq("is_active", true).order("name"),
     supabase
@@ -58,6 +60,7 @@ export default async function TvModePage() {
     getGeneralRanking(period.id, supabase),
     getIndicatorAttainment(period.id, supabase),
     supabase.from("sellers").select("id, full_name, photo_path"),
+    getActiveTheme(supabase),
   ]);
 
   const sellerById = new Map((sellers ?? []).map((seller) => [seller.id, seller]));
@@ -118,7 +121,7 @@ export default async function TvModePage() {
 
   const slide1 = (
     <div className="flex h-full flex-col items-center justify-center gap-10 overflow-hidden px-16 py-10">
-      <Podium entries={podiumEntries} large />
+      <Podium entries={podiumEntries} large theme={theme} />
       {restRows.length > 0 && (
         <div className="w-full max-w-5xl space-y-3">
           {restRows.slice(0, 5).map((row) => (

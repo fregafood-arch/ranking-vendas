@@ -7,6 +7,7 @@ import { Podium } from "@/components/ranking/Podium";
 import { ProgressBar } from "@/components/ranking/ProgressBar";
 import { SellerAvatar } from "@/components/sellers/SellerAvatar";
 import { formatIndicatorValue } from "@/lib/format";
+import { getActiveTheme } from "@/lib/theme";
 
 export default async function RankingPage({
   searchParams,
@@ -39,10 +40,11 @@ export default async function RankingPage({
     .eq("is_active", true)
     .order("name");
 
-  const [ranking, attainment, { data: sellers }] = await Promise.all([
+  const [ranking, attainment, { data: sellers }, theme] = await Promise.all([
     getGeneralRanking(periodId),
     getIndicatorAttainment(periodId),
     supabase.from("sellers").select("id, full_name, photo_path"),
+    getActiveTheme(),
   ]);
 
   const sellerById = new Map((sellers ?? []).map((seller) => [seller.id, seller]));
@@ -91,6 +93,7 @@ export default async function RankingPage({
 
       <Podium
         periodId={periodId}
+        theme={theme}
         entries={rows.slice(0, 3).map((row) => ({
           sellerId: row.sellerId,
           name: row.name,

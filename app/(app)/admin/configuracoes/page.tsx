@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { PeriodPicker } from "@/components/shared/PeriodPicker";
 import { RankingWeightsForm } from "@/components/config/RankingWeightsForm";
 import { TieBreakRulesForm } from "@/components/config/TieBreakRulesForm";
+import { ThemeSwitcher } from "@/components/admin/ThemeSwitcher";
+import { getActiveTheme } from "@/lib/theme";
 
 const DEFAULT_TIE_BREAK_ORDER = [
   { ruleKey: "PRIMARY_GOAL_PERCENT", direction: "DESC" as const },
@@ -65,6 +67,8 @@ export default async function AdminSettingsPage({
       }))
     : DEFAULT_TIE_BREAK_ORDER;
 
+  const activeTheme = await getActiveTheme();
+
   return (
     <div className="space-y-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -76,6 +80,14 @@ export default async function AdminSettingsPage({
         </div>
         <PeriodPicker periods={periods} selectedId={periodId} basePath="/admin/configuracoes" />
       </div>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-medium text-neutral-100">Aparência</h2>
+        <p className="text-sm text-neutral-500">
+          Skin visual usada no Ranking, Pódio e Modo TV — vale para todo mundo que acessar.
+        </p>
+        <ThemeSwitcher current={activeTheme} />
+      </section>
 
       <section className="space-y-3">
         <h2 className="text-lg font-medium text-neutral-100">Pesos padrão e teto de atingimento</h2>
