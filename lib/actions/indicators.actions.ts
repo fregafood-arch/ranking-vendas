@@ -116,6 +116,16 @@ export async function deleteIndicator(indicatorId: string): Promise<void> {
   const { error } = await supabase.from("indicators").delete().eq("id", indicatorId);
 
   if (error) {
+    // trg_validate_ranking_rules_weights (migration 0002) bloqueia a
+    // exclusão em cascata de ranking_rules quando isso deixaria os pesos
+    // padrão ativos de algum período somando != 100% — a transação inteira
+    // é desfeita (o indicador continua existindo), mas a mensagem crua do
+    // Postgres expõe um UUID de período e não diz o que fazer a respeito.
+    if (error.message.includes("pesos padrão ativos do período")) {
+      throw new Error(
+        "Não foi possível excluir: este indicador tem peso configurado em pelo menos um período, e removê-lo deixaria os pesos padrão desse período somando menos de 100%. Ajuste os pesos em Configurações antes de excluir.",
+      );
+    }
     throw new Error(`Não foi possível excluir: ${error.message}`);
   }
 
