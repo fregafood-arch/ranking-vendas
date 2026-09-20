@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ResultForm } from "@/components/results/ResultForm";
-import { DeleteResultButton } from "@/components/results/DeleteResultButton";
+import { ResultsHistoryTable } from "@/components/results/ResultsHistoryTable";
 import { createSalesResult } from "@/lib/actions/sales-results.actions";
 import { formatIndicatorValue } from "@/lib/format";
 
@@ -41,6 +40,16 @@ export default async function AdminResultsPage() {
     label: `${indicator.name} (${indicator.unit})`,
   }));
 
+  const historyRows = resultRows.map((result) => ({
+    id: result.id,
+    sellerName: result.sellers?.full_name ?? "—",
+    indicatorLabel: result.indicators ? `${result.indicators.name} (${result.indicators.unit})` : "—",
+    valueLabel: result.indicators
+      ? formatIndicatorValue(Number(result.value), result.indicators.unit)
+      : Number(result.value).toLocaleString("pt-BR"),
+    dateLabel: formatDate(result.entry_date),
+  }));
+
   return (
     <div className="space-y-10">
       <div>
@@ -58,57 +67,7 @@ export default async function AdminResultsPage() {
       <section className="space-y-3">
         <h2 className="text-lg font-medium text-neutral-100">Histórico</h2>
         <p className="text-xs text-neutral-500">Mostrando os 100 lançamentos mais recentes.</p>
-        <div className="overflow-x-auto rounded-lg border border-neutral-800">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-neutral-900 text-neutral-400">
-              <tr>
-                <th className="px-4 py-3 font-medium">Vendedor</th>
-                <th className="px-4 py-3 font-medium">Indicador</th>
-                <th className="px-4 py-3 font-medium">Valor</th>
-                <th className="px-4 py-3 font-medium">Data</th>
-                <th className="px-4 py-3 font-medium" aria-hidden />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-800">
-              {resultRows.map((result) => (
-                <tr key={result.id} className="text-neutral-200">
-                  <td className="px-4 py-3 whitespace-nowrap">{result.sellers?.full_name ?? "—"}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-neutral-400">
-                    {result.indicators
-                      ? `${result.indicators.name} (${result.indicators.unit})`
-                      : "—"}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    {result.indicators
-                      ? formatIndicatorValue(Number(result.value), result.indicators.unit)
-                      : Number(result.value).toLocaleString("pt-BR")}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-neutral-400">
-                    {formatDate(result.entry_date)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-3 whitespace-nowrap">
-                      <Link
-                        href={`/admin/resultados/${result.id}`}
-                        className="text-neutral-400 transition-colors hover:text-neutral-50"
-                      >
-                        Editar
-                      </Link>
-                      <DeleteResultButton resultId={result.id} />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {!resultRows.length && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-neutral-500">
-                    Nenhum lançamento ainda.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <ResultsHistoryTable rows={historyRows} />
       </section>
     </div>
   );

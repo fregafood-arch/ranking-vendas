@@ -122,3 +122,18 @@ export async function deleteSalesResult(resultId: string): Promise<void> {
 
   revalidatePath("/admin/resultados");
 }
+
+export async function deleteSalesResults(resultIds: string[]): Promise<void> {
+  await requireAdmin();
+
+  if (!resultIds.length) return;
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("sales_results").delete().in("id", resultIds);
+
+  if (error) {
+    throw new Error(`Não foi possível excluir: ${error.message}`);
+  }
+
+  revalidatePath("/admin/resultados");
+}
