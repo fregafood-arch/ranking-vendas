@@ -100,3 +100,24 @@ export async function setIndicatorActive(indicatorId: string, isActive: boolean)
 
   revalidatePath("/admin/indicadores");
 }
+
+/**
+ * Exclusão de verdade (não só inativar) — a pedido do usuário. As chaves
+ * estrangeiras de seller_goals, team_goals, sales_results, ranking_rules e
+ * achievements apontam pra indicators com "on delete cascade" (migration
+ * 0001), então isso também apaga metas, lançamentos e regras de ranking já
+ * feitos com este indicador. O aviso disso fica no texto de confirmação
+ * (ver IndicatorDeleteButton), não só neste comentário.
+ */
+export async function deleteIndicator(indicatorId: string): Promise<void> {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const { error } = await supabase.from("indicators").delete().eq("id", indicatorId);
+
+  if (error) {
+    throw new Error(`Não foi possível excluir: ${error.message}`);
+  }
+
+  revalidatePath("/admin/indicadores");
+}

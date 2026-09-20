@@ -10,11 +10,13 @@ import { useState, useTransition } from "react";
 export function ConfirmButton({
   label,
   confirmLabel = "Confirmar",
+  confirmQuestion = "Tem certeza?",
   onConfirm,
   className,
 }: {
   label: string;
   confirmLabel?: string;
+  confirmQuestion?: string;
   onConfirm: () => Promise<void> | void;
   className?: string;
 }) {
@@ -24,7 +26,7 @@ export function ConfirmButton({
   if (confirming) {
     return (
       <span className="inline-flex items-center gap-2 whitespace-nowrap">
-        <span className="text-xs text-neutral-500">Tem certeza?</span>
+        <span className="text-xs text-neutral-500">{confirmQuestion}</span>
         <button
           type="button"
           disabled={isPending}

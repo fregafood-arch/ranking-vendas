@@ -2,14 +2,27 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { UNIT_LABELS } from "@/lib/validations/indicator";
 import { IndicatorActiveToggle } from "@/components/indicators/IndicatorActiveToggle";
+import { IndicatorDeleteButton } from "@/components/indicators/IndicatorDeleteButton";
+
+function countByIndicator(rows: { indicator_id: string }[] | null) {
+  const counts = new Map<string, number>();
+  for (const row of rows ?? []) {
+    counts.set(row.indicator_id, (counts.get(row.indicator_id) ?? 0) + 1);
+  }
+  return counts;
+}
 
 export default async function AdminIndicatorsPage() {
   const supabase = await createClient();
 
-  const { data: indicators } = await supabase
-    .from("indicators")
-    .select("id, name, unit, custom_unit_label, is_active")
-    .order("name");
+  const [{ data: indicators }, { data: resultRows }, { data: goalRows }] = await Promise.all([
+    supabase.from("indicators").select("id, name, unit, custom_unit_label, is_active").order("name"),
+    supabase.from("sales_results").select("indicator_id"),
+    supabase.from("seller_goals").select("indicator_id"),
+  ]);
+
+  const resultCounts = countByIndicator(resultRows);
+  const goalCounts = countByIndicator(goalRows);
 
   return (
     <div className="space-y-6">
@@ -64,6 +77,11 @@ export default async function AdminIndicatorsPage() {
                     <IndicatorActiveToggle
                       indicatorId={indicator.id}
                       isActive={indicator.is_active}
+                    />
+                    <IndicatorDeleteButton
+                      indicatorId={indicator.id}
+                      resultCount={resultCounts.get(indicator.id) ?? 0}
+                      goalCount={goalCounts.get(indicator.id) ?? 0}
                     />
                   </div>
                 </td>
