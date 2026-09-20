@@ -11,6 +11,7 @@ const ADMIN_NAV_ITEMS = [
   { href: "/admin/metas", label: "Metas" },
   { href: "/admin/periodos", label: "Períodos" },
   { href: "/admin/conquistas", label: "Conquistas" },
+  { href: "/admin/avisos", label: "Avisos" },
   { href: "/admin/configuracoes", label: "Configurações" },
 ];
 
