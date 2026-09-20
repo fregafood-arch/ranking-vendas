@@ -15,7 +15,19 @@ export type ResultRow = {
 
 export function ResultsHistoryTable({ rows }: { rows: ResultRow[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const allSelected = rows.length > 0 && selected.size === rows.length;
+  const [search, setSearch] = useState("");
+
+  const query = search.trim().toLowerCase();
+  const filteredRows = query
+    ? rows.filter((row) =>
+        [row.sellerName, row.indicatorLabel, row.valueLabel, row.dateLabel]
+          .join(" ")
+          .toLowerCase()
+          .includes(query),
+      )
+    : rows;
+
+  const allSelected = filteredRows.length > 0 && filteredRows.every((row) => selected.has(row.id));
 
   function toggleOne(id: string) {
     setSelected((prev) => {
@@ -30,11 +42,27 @@ export function ResultsHistoryTable({ rows }: { rows: ResultRow[] }) {
   }
 
   function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(rows.map((row) => row.id)));
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        for (const row of filteredRows) next.delete(row.id);
+      } else {
+        for (const row of filteredRows) next.add(row.id);
+      }
+      return next;
+    });
   }
 
   return (
     <div className="space-y-3">
+      <input
+        type="search"
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder="Buscar por vendedor, indicador, valor ou data..."
+        className="w-full max-w-sm rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-blue-500 focus:outline-none"
+      />
+
       {selected.size > 0 && (
         <div className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5">
           <p className="text-sm text-neutral-300">{selected.size} selecionado(s)</p>
@@ -81,7 +109,7 @@ export function ResultsHistoryTable({ rows }: { rows: ResultRow[] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-800">
-            {rows.map((row) => (
+            {filteredRows.map((row) => (
               <tr
                 key={row.id}
                 className={
@@ -118,10 +146,10 @@ export function ResultsHistoryTable({ rows }: { rows: ResultRow[] }) {
                 </td>
               </tr>
             ))}
-            {!rows.length && (
+            {!filteredRows.length && (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-neutral-500">
-                  Nenhum lançamento ainda.
+                  {rows.length ? "Nenhum lançamento encontrado para essa busca." : "Nenhum lançamento ainda."}
                 </td>
               </tr>
             )}
