@@ -39,6 +39,7 @@ export default async function TvModePage() {
 
   const [
     { data: indicators },
+    { data: teams },
     { data: teamGoals },
     { data: periodResults },
     ranking,
@@ -47,23 +48,22 @@ export default async function TvModePage() {
     theme,
   ] = await Promise.all([
     supabase.from("indicators").select("id, name, unit").eq("is_active", true).order("name"),
-    supabase
-      .from("team_goals")
-      .select("indicator_id, target_value")
-      .is("team_id", null)
-      .eq("period_id", period.id),
+    supabase.from("teams").select("id, name").eq("is_active", true).order("name"),
+    supabase.from("team_goals").select("team_id, indicator_id, target_value").eq("period_id", period.id),
     supabase
       .from("sales_results")
-      .select("indicator_id, value")
+      .select("indicator_id, value, seller_id")
       .gte("entry_date", period.start_date)
       .lte("entry_date", period.end_date),
     getGeneralRanking(period.id, supabase),
     getIndicatorAttainment(period.id, supabase),
-    supabase.from("sellers").select("id, full_name, photo_path"),
+    supabase.from("sellers").select("id, full_name, photo_path, team_id"),
     getActiveTheme(supabase),
   ]);
 
   const sellerById = new Map((sellers ?? []).map((seller) => [seller.id, seller]));
+  const sellerTeamById = new Map((sellers ?? []).map((seller) => [seller.id, seller.team_id]));
+  const teamNameById = new Map((teams ?? []).map((team) => [team.id, team.name]));
   const indicatorById = new Map((indicators ?? []).map((indicator) => [indicator.id, indicator]));
   const attainmentByKey = new Map(
     attainment.map((row) => [`${row.seller_id}:${row.indicator_id}`, row]),
@@ -94,12 +94,41 @@ export default async function TvModePage() {
     });
 
   const totalsByIndicator = new Map<string, number>();
+  const totalsByTeamIndicator = new Map<string, number>();
   for (const result of periodResults ?? []) {
     totalsByIndicator.set(
       result.indicator_id,
       (totalsByIndicator.get(result.indicator_id) ?? 0) + Number(result.value),
     );
+
+    const teamId = sellerTeamById.get(result.seller_id);
+    if (teamId) {
+      const key = `${teamId}:${result.indicator_id}`;
+      totalsByTeamIndicator.set(key, (totalsByTeamIndicator.get(key) ?? 0) + Number(result.value));
+    }
   }
+
+  const teamGoalCards = (teamGoals ?? [])
+    .map((goal) => {
+      const indicator = indicatorById.get(goal.indicator_id);
+      if (!indicator) return null;
+
+      const teamName = goal.team_id ? (teamNameById.get(goal.team_id) ?? "Equipe") : "Empresa toda";
+      const realized = goal.team_id
+        ? (totalsByTeamIndicator.get(`${goal.team_id}:${goal.indicator_id}`) ?? 0)
+        : (totalsByIndicator.get(goal.indicator_id) ?? 0);
+      const target = Number(goal.target_value);
+
+      return {
+        key: `${goal.team_id ?? "global"}:${goal.indicator_id}`,
+        label: `${teamName} — ${indicator.name}`,
+        unit: indicator.unit,
+        realized,
+        target,
+        percent: target > 0 ? (realized / target) * 100 : 0,
+      };
+    })
+    .filter((card): card is NonNullable<typeof card> => card !== null);
 
   const rankedSellers = ranking.filter((row) => row.primary_attainment_pct !== null);
   const metGoalCount = rankedSellers.filter((row) => (row.primary_attainment_pct ?? 0) >= 100).length;
@@ -141,39 +170,30 @@ export default async function TvModePage() {
 
   const slide2 = (
     <div className="flex h-full flex-col items-center justify-center gap-12 px-16">
-      {!!teamGoals?.length && (
+      {teamGoalCards.length > 0 && (
         <div className="grid w-full max-w-5xl grid-cols-1 gap-8 md:grid-cols-2">
-          {teamGoals.map((goal) => {
-            const indicator = indicatorById.get(goal.indicator_id);
-            if (!indicator) return null;
-
-            const realized = totalsByIndicator.get(goal.indicator_id) ?? 0;
-            const target = Number(goal.target_value);
-            const percent = target > 0 ? (realized / target) * 100 : 0;
-
-            return (
-              <div
-                key={goal.indicator_id}
-                className="space-y-4 rounded-2xl border border-neutral-800 bg-neutral-900 p-8"
-              >
-                <p className="text-2xl text-neutral-400">Meta da equipe — {indicator.name}</p>
-                <p className="text-5xl font-bold text-neutral-50">
-                  {formatIndicatorValue(realized, indicator.unit)}
-                  <span className="text-2xl font-normal text-neutral-500">
-                    {" "}
-                    / {formatIndicatorValue(target, indicator.unit)}
-                  </span>
-                </p>
-                <div className="h-4 w-full overflow-hidden rounded-full bg-neutral-800">
-                  <div
-                    className="h-full bg-emerald-500"
-                    style={{ width: `${Math.min(percent, 100)}%` }}
-                  />
-                </div>
-                <p className="text-3xl font-semibold text-emerald-400">{percent.toFixed(1)}%</p>
+          {teamGoalCards.map((card) => (
+            <div
+              key={card.key}
+              className="space-y-4 rounded-2xl border border-neutral-800 bg-neutral-900 p-8"
+            >
+              <p className="text-2xl text-neutral-400">Meta — {card.label}</p>
+              <p className="text-5xl font-bold text-neutral-50">
+                {formatIndicatorValue(card.realized, card.unit)}
+                <span className="text-2xl font-normal text-neutral-500">
+                  {" "}
+                  / {formatIndicatorValue(card.target, card.unit)}
+                </span>
+              </p>
+              <div className="h-4 w-full overflow-hidden rounded-full bg-neutral-800">
+                <div
+                  className="h-full bg-emerald-500"
+                  style={{ width: `${Math.min(card.percent, 100)}%` }}
+                />
               </div>
-            );
-          })}
+              <p className="text-3xl font-semibold text-emerald-400">{card.percent.toFixed(1)}%</p>
+            </div>
+          ))}
         </div>
       )}
 

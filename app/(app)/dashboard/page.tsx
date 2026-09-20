@@ -34,6 +34,7 @@ export default async function DashboardPage({
 
   const [
     { data: indicators },
+    { data: teams },
     { data: teamGoals },
     { data: periodResults },
     ranking,
@@ -41,33 +42,65 @@ export default async function DashboardPage({
     { data: sellers },
   ] = await Promise.all([
     supabase.from("indicators").select("id, name, unit").eq("is_active", true).order("name"),
+    supabase.from("teams").select("id, name").eq("is_active", true).order("name"),
     supabase
       .from("team_goals")
-      .select("indicator_id, target_value")
-      .is("team_id", null)
+      .select("team_id, indicator_id, target_value")
       .eq("period_id", periodId),
     supabase
       .from("sales_results")
-      .select("indicator_id, value")
+      .select("indicator_id, value, seller_id")
       .gte("entry_date", period.start_date)
       .lte("entry_date", period.end_date),
     getGeneralRanking(periodId),
     getIndicatorAttainment(periodId),
-    supabase.from("sellers").select("id, full_name"),
+    supabase.from("sellers").select("id, full_name, team_id"),
   ]);
 
   const indicatorById = new Map((indicators ?? []).map((indicator) => [indicator.id, indicator]));
+  const teamNameById = new Map((teams ?? []).map((team) => [team.id, team.name]));
   const sellerById = new Map((sellers ?? []).map((seller) => [seller.id, seller]));
+  const sellerTeamById = new Map((sellers ?? []).map((seller) => [seller.id, seller.team_id]));
   const attainmentByKey = new Map(
     attainment.map((row) => [`${row.seller_id}:${row.indicator_id}`, row]),
   );
 
+  // totalsByIndicator: total da empresa toda (usado pela meta "Toda a
+  // empresa", team_id nulo). totalsByTeamIndicator: mesmo total, mas só
+  // somando vendedores daquela equipe — necessário porque cada equipe agora
+  // pode ter sua própria meta (ver ETAPA extra "meta por equipe").
   const totalsByIndicator = new Map<string, number>();
+  const totalsByTeamIndicator = new Map<string, number>();
   for (const result of periodResults ?? []) {
     totalsByIndicator.set(
       result.indicator_id,
       (totalsByIndicator.get(result.indicator_id) ?? 0) + Number(result.value),
     );
+
+    const teamId = sellerTeamById.get(result.seller_id);
+    if (teamId) {
+      const key = `${teamId}:${result.indicator_id}`;
+      totalsByTeamIndicator.set(key, (totalsByTeamIndicator.get(key) ?? 0) + Number(result.value));
+    }
+  }
+
+  type TeamGoalCard = { indicatorId: string; target: number; realized: number };
+  const teamGoalGroups = new Map<string, { teamName: string; goals: TeamGoalCard[] }>();
+  for (const goal of teamGoals ?? []) {
+    const key = goal.team_id ?? "global";
+    const teamName = goal.team_id ? (teamNameById.get(goal.team_id) ?? "Equipe") : "Toda a empresa";
+    const realized = goal.team_id
+      ? (totalsByTeamIndicator.get(`${goal.team_id}:${goal.indicator_id}`) ?? 0)
+      : (totalsByIndicator.get(goal.indicator_id) ?? 0);
+
+    if (!teamGoalGroups.has(key)) {
+      teamGoalGroups.set(key, { teamName, goals: [] });
+    }
+    teamGoalGroups.get(key)!.goals.push({
+      indicatorId: goal.indicator_id,
+      target: Number(goal.target_value),
+      realized,
+    });
   }
 
   const rankedSellers = ranking.filter((row) => row.primary_attainment_pct !== null);
@@ -218,50 +251,47 @@ export default async function DashboardPage({
         <PeriodPicker periods={periods} selectedId={periodId} basePath="/dashboard" />
       </div>
 
-      {!!teamGoals?.length && (
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-neutral-100">Meta da equipe</h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {teamGoals.map((goal) => {
-              const indicator = indicatorById.get(goal.indicator_id);
-              if (!indicator) return null;
+      {teamGoalGroups.size > 0 &&
+        [...teamGoalGroups.entries()].map(([key, group]) => (
+          <section key={key} className="space-y-4">
+            <h2 className="text-xl font-semibold text-neutral-100">Meta — {group.teamName}</h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {group.goals.map((goal) => {
+                const indicator = indicatorById.get(goal.indicatorId);
+                if (!indicator) return null;
 
-              const realized = totalsByIndicator.get(goal.indicator_id) ?? 0;
-              const target = Number(goal.target_value);
-              const percent = target > 0 ? (realized / target) * 100 : 0;
-              const remaining = Math.max(0, target - realized);
-              const dailyAverageNeeded = daysRemaining > 0 ? remaining / daysRemaining : remaining;
+                const { realized, target } = goal;
+                const percent = target > 0 ? (realized / target) * 100 : 0;
+                const remaining = Math.max(0, target - realized);
+                const dailyAverageNeeded = daysRemaining > 0 ? remaining / daysRemaining : remaining;
 
-              return (
-                <div
-                  key={goal.indicator_id}
-                  className="space-y-4 rounded-2xl bg-neutral-900 p-6"
-                >
-                  <div className="flex items-baseline justify-between">
-                    <p className="text-sm text-neutral-400">{indicator.name}</p>
-                    <p className="text-sm font-medium text-emerald-400">{percent.toFixed(1)}%</p>
+                return (
+                  <div key={goal.indicatorId} className="space-y-4 rounded-2xl bg-neutral-900 p-6">
+                    <div className="flex items-baseline justify-between">
+                      <p className="text-sm text-neutral-400">{indicator.name}</p>
+                      <p className="text-sm font-medium text-emerald-400">{percent.toFixed(1)}%</p>
+                    </div>
+                    <p className="text-3xl font-bold tracking-tight tabular-nums text-neutral-50">
+                      {formatIndicatorValue(realized, indicator.unit)}
+                      <span className="text-lg font-normal tracking-normal text-neutral-500">
+                        {" "}
+                        / {formatIndicatorValue(target, indicator.unit)}
+                      </span>
+                    </p>
+                    <ProgressBar percent={percent} className="h-3 w-full" />
+                    <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-neutral-500">
+                      <span>Faltam {formatIndicatorValue(remaining, indicator.unit)}</span>
+                      <span>{daysRemaining} dia(s) restante(s) no período</span>
+                      <span>
+                        Média necessária/dia: {formatIndicatorValue(dailyAverageNeeded, indicator.unit)}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-3xl font-bold tracking-tight tabular-nums text-neutral-50">
-                    {formatIndicatorValue(realized, indicator.unit)}
-                    <span className="text-lg font-normal tracking-normal text-neutral-500">
-                      {" "}
-                      / {formatIndicatorValue(target, indicator.unit)}
-                    </span>
-                  </p>
-                  <ProgressBar percent={percent} className="h-3 w-full" />
-                  <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-neutral-500">
-                    <span>Faltam {formatIndicatorValue(remaining, indicator.unit)}</span>
-                    <span>{daysRemaining} dia(s) restante(s) no período</span>
-                    <span>
-                      Média necessária/dia: {formatIndicatorValue(dailyAverageNeeded, indicator.unit)}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+                );
+              })}
+            </div>
+          </section>
+        ))}
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-neutral-100">Destaques</h2>

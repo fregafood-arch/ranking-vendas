@@ -22,7 +22,7 @@ export default async function AdminGoalsPage({
         <h1 className="text-xl font-semibold text-neutral-50">Metas</h1>
         <p className="text-sm text-neutral-400">
           Nenhum período cadastrado ainda.{" "}
-          <Link href="/admin/periodos/novo" className="text-emerald-400 hover:underline">
+          <Link href="/admin/periodos/novo" className="text-blue-400 hover:underline">
             Criar período
           </Link>
         </p>
@@ -33,19 +33,31 @@ export default async function AdminGoalsPage({
   const defaultPeriodId = periods.find((period) => period.is_active)?.id ?? periods[0].id;
   const periodId = periodIdParam ?? defaultPeriodId;
 
-  const [{ data: indicators }, { data: sellers }, { data: teamGoals }] = await Promise.all([
+  const [{ data: indicators }, { data: sellers }, { data: teams }, { data: teamGoals }] = await Promise.all([
     supabase.from("indicators").select("id, name, unit").eq("is_active", true).order("name"),
     supabase.from("sellers").select("id, full_name").eq("is_active", true).order("full_name"),
+    supabase.from("teams").select("id, name").eq("is_active", true).order("name"),
     supabase
       .from("team_goals")
-      .select("indicator_id, target_value")
-      .is("team_id", null)
+      .select("team_id, indicator_id, target_value")
       .eq("period_id", periodId),
   ]);
 
-  const teamGoalValues = Object.fromEntries(
-    (teamGoals ?? []).map((goal) => [goal.indicator_id, Number(goal.target_value)]),
-  );
+  // Metas de equipe são opcionais e organizadas por equipe (tabela teams,
+  // cadastrada em Administração > Equipes) — "Toda a empresa" (team_id
+  // nulo) continua existindo à parte, pra quem quer acompanhar um número
+  // geral sem amarrar a uma equipe específica.
+  const goalsByTeam = new Map<string, Record<string, number>>();
+  for (const goal of teamGoals ?? []) {
+    const key = goal.team_id ?? "global";
+    if (!goalsByTeam.has(key)) goalsByTeam.set(key, {});
+    goalsByTeam.get(key)![goal.indicator_id] = Number(goal.target_value);
+  }
+
+  const teamSections = [
+    { id: null, key: "global", name: "Toda a empresa" },
+    ...(teams ?? []).map((team) => ({ id: team.id, key: team.id, name: team.name })),
+  ];
 
   return (
     <div className="space-y-10">
@@ -57,15 +69,40 @@ export default async function AdminGoalsPage({
       {!indicators?.length ? (
         <p className="text-sm text-neutral-400">
           Nenhum indicador ativo.{" "}
-          <Link href="/admin/indicadores/novo" className="text-emerald-400 hover:underline">
+          <Link href="/admin/indicadores/novo" className="text-blue-400 hover:underline">
             Criar indicador
           </Link>
         </p>
       ) : (
         <>
-          <section className="space-y-3">
-            <h2 className="text-lg font-medium text-neutral-100">Meta da equipe</h2>
-            <TeamGoalsForm periodId={periodId} indicators={indicators} initialValues={teamGoalValues} />
+          <section className="space-y-6">
+            <div>
+              <h2 className="text-lg font-medium text-neutral-100">Metas de equipe</h2>
+              <p className="text-sm text-neutral-500">
+                Opcional por equipe — deixe em branco se essa equipe não tiver meta neste período. Quando
+                definida, aparece no Dashboard com o quanto já foi atingido.
+              </p>
+            </div>
+            {teamSections.map((section) => (
+              <div key={section.key} className="space-y-3 rounded-lg border border-neutral-800 p-4">
+                <h3 className="text-sm font-medium text-neutral-200">{section.name}</h3>
+                <TeamGoalsForm
+                  periodId={periodId}
+                  teamId={section.id}
+                  indicators={indicators}
+                  initialValues={goalsByTeam.get(section.key) ?? {}}
+                />
+              </div>
+            ))}
+            {!teams?.length && (
+              <p className="text-xs text-neutral-500">
+                Nenhuma equipe cadastrada ainda —{" "}
+                <Link href="/admin/equipes/novo" className="text-blue-400 hover:underline">
+                  criar equipe
+                </Link>{" "}
+                pra ter metas por equipe, além da meta da empresa toda acima.
+              </p>
+            )}
           </section>
 
           <section className="space-y-3">
