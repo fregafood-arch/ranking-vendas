@@ -149,11 +149,14 @@ export default async function TvModePage() {
   const restRows = rows.slice(3);
 
   const slide1 = (
-    <div className="flex h-full flex-col items-center justify-center gap-10 overflow-hidden px-16 py-10">
+    <div
+      className="flex h-full flex-col items-center gap-6 overflow-hidden px-16 py-6"
+      style={{ justifyContent: "safe center" }}
+    >
       <Podium entries={podiumEntries} large theme={theme} />
       {restRows.length > 0 && (
         <div className="w-full max-w-5xl space-y-3">
-          {restRows.slice(0, 5).map((row) => (
+          {restRows.slice(0, 3).map((row) => (
             <TVRankingRow
               key={row.sellerId}
               rank={row.rank}
@@ -169,7 +172,10 @@ export default async function TvModePage() {
   );
 
   const slide2 = (
-    <div className="flex h-full flex-col items-center justify-center gap-12 px-16">
+    <div
+      className="flex h-full flex-col items-center gap-12 overflow-hidden px-16 py-6"
+      style={{ justifyContent: "safe center" }}
+    >
       {teamGoalCards.length > 0 && (
         <div className="grid w-full max-w-5xl grid-cols-1 gap-8 md:grid-cols-2">
           {teamGoalCards.map((card) => (
@@ -207,7 +213,10 @@ export default async function TvModePage() {
   );
 
   const slide3 = (
-    <div className="flex h-full flex-col justify-center gap-3 overflow-hidden px-16 py-10">
+    <div
+      className="flex h-full flex-col gap-3 overflow-hidden px-16 py-10"
+      style={{ justifyContent: "safe center" }}
+    >
       {rows.map((row) => (
         <TVRankingRow
           key={row.sellerId}
