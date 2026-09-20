@@ -13,8 +13,8 @@ export function ProgressBar({
       <div
         className={
           overAchieved
-            ? "h-full bg-gradient-to-r from-emerald-500 to-emerald-300"
-            : "h-full bg-gradient-to-r from-emerald-700 to-emerald-500"
+            ? "h-full bg-gradient-to-r from-blue-500 to-blue-300"
+            : "h-full bg-gradient-to-r from-blue-700 to-blue-500"
         }
         style={{ width: `${clamped}%` }}
       />

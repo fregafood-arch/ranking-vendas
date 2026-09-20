@@ -298,7 +298,7 @@ function PodiumColumnGame({
           <div
             className="arena-shine pointer-events-none absolute inset-0"
             style={{
-              background: "linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.35) 50%, transparent 60%)",
+              backgroundImage: "linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.35) 50%, transparent 60%)",
               backgroundSize: "60% 100%",
               backgroundRepeat: "no-repeat",
               animation: "arena-shine-sweep 3.6s ease-in-out infinite",
@@ -371,18 +371,11 @@ const ZOEIRA_STYLES: Record<1 | 2 | 3, { ring: string; glow: string; top: string
   },
 };
 
-function zoeiraFlavor(percent: number): { sticker: string; tag: string; quote: string } {
-  if (percent >= 150) {
-    return { sticker: "🚀", tag: "Imparável", quote: "Não para, não cansa." };
-  }
-  if (percent >= 100) {
-    return { sticker: "🏆", tag: "Bateu a meta", quote: "Prometeu, cumpriu." };
-  }
-  if (percent >= 70) {
-    return { sticker: "🎯", tag: "Quase lá", quote: "Fala que vai e entrega (quase)." };
-  }
-  return { sticker: "👻", tag: "Sumiu no CRM", quote: "Lenda urbana do pipeline." };
-}
+const ZOEIRA_RANK_FLAVOR: Record<1 | 2 | 3, { sticker: string; quote: string }> = {
+  1: { sticker: "👑", quote: "Hoje o trono tem dono." },
+  2: { sticker: "😤", quote: "Tá no cangote do primeiro." },
+  3: { sticker: "👻", quote: "Entrou no pódio. Agora não inventa de sumir." },
+};
 
 const LAUREL_LEAVES = [
   { x: 36, y: 71, angle: -62 },
@@ -435,7 +428,7 @@ function PodiumColumnZoeira({
   large?: boolean;
 }) {
   const style = ZOEIRA_STYLES[rank];
-  const flavor = zoeiraFlavor(entry.percent);
+  const flavor = ZOEIRA_RANK_FLAVOR[rank];
   const isChampion = rank === 1;
 
   const vpMax = large ? 2000 : 2200;
@@ -453,7 +446,6 @@ function PodiumColumnZoeira({
       }[rank];
 
   const nameSize = large ? fluidWH(16, 30, vpMax, vhMax) : fluid(12, 20, vpMax);
-  const tagSize = large ? fluidWH(13, 22, vpMax, vhMax) : fluid(11, 16, vpMax);
   const quoteSize = large ? fluidWH(12, 19, vpMax, vhMax) : fluid(10, 14, vpMax);
   const digitSize = large ? fluidWH(44, 60, vpMax, vhMax) : fluid(28, 56, vpMax);
   const stickerSize = large ? fluidWH(22, 42, vpMax, vhMax) : fluid(16, 30, vpMax);
@@ -492,13 +484,10 @@ function PodiumColumnZoeira({
         >
           {entry.name}
         </Link>
-        <p className="font-medium" style={{ fontSize: tagSize, color: style.ring }}>
-          {flavor.tag}
-        </p>
       </div>
 
       <p
-        className="mt-1.5 max-w-full truncate text-center text-neutral-400 italic"
+        className="mt-1.5 max-w-full text-center text-neutral-400 italic"
         style={{ fontSize: quoteSize }}
       >
         “{flavor.quote}”
@@ -553,14 +542,14 @@ function ZoeiraHeader({
         style={{ fontFamily: "var(--font-zoeira-doodle)", fontSize: doodleSize }}
         aria-hidden
       >
-        meta é só o começo
+        CRM atualizado evita assombração.
       </span>
       <span
         className="pointer-events-none absolute top-0 right-2 hidden rotate-3 text-neutral-500 lg:block"
         style={{ fontFamily: "var(--font-zoeira-doodle)", fontSize: doodleSize }}
         aria-hidden
       >
-        CRM nunca esquece
+        Café, WhatsApp e fechamento.
       </span>
       <div>
         <h2 className="font-black tracking-tight text-neutral-50" style={{ fontSize: titleSize }}>
@@ -569,6 +558,227 @@ function ZoeiraHeader({
         <p className="text-neutral-400" style={{ fontSize: subtitleSize }}>
           Foco na meta. Olho no topo.
         </p>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Tema "holofote" — pódio de palco de premiação: a skin com mais movimento
+// contínuo do produto (feixes de luz pulsando, confete caindo, anéis
+// "sonar" nos avatares, brilho passando nas placas, raio giratório atrás
+// do campeão). Nada aqui é dado mockado -- nome, foto e % continuam vindo
+// do resultado real; a animação é só a encenação em volta.
+// ============================================================================
+
+const HOLOFOTE_STYLES: Record<1 | 2 | 3, { ring: string; glow: string; top: string; front: string }> = {
+  1: {
+    ring: "#ffd166",
+    glow: "rgba(255,209,102,0.55)",
+    top: "linear-gradient(135deg, #fff3c4, #ffd166)",
+    front: "linear-gradient(180deg, #f5a623, #8a5a08)",
+  },
+  2: {
+    ring: "#ff3d81",
+    glow: "rgba(255,61,129,0.5)",
+    top: "linear-gradient(135deg, #ffd4e6, #ff3d81)",
+    front: "linear-gradient(180deg, #d61f66, #6b0f38)",
+  },
+  3: {
+    ring: "#9b7bff",
+    glow: "rgba(155,123,255,0.5)",
+    top: "linear-gradient(135deg, #e3d9ff, #9b7bff)",
+    front: "linear-gradient(180deg, #6d4fd1, #362266)",
+  },
+};
+
+const CONFETTI_PIECES = [
+  { left: "4%", color: "#ffd166", delay: "0s", duration: "5.2s", size: 8 },
+  { left: "14%", color: "#ff3d81", delay: "1.4s", duration: "6.1s", size: 6 },
+  { left: "26%", color: "#9b7bff", delay: "0.6s", duration: "5.6s", size: 7 },
+  { left: "40%", color: "#ffd166", delay: "2.2s", duration: "6.8s", size: 6 },
+  { left: "55%", color: "#4fd1ff", delay: "0.2s", duration: "5.9s", size: 8 },
+  { left: "68%", color: "#ff3d81", delay: "1.8s", duration: "6.4s", size: 6 },
+  { left: "80%", color: "#ffd166", delay: "1s", duration: "5.4s", size: 7 },
+  { left: "92%", color: "#9b7bff", delay: "2.6s", duration: "6.6s", size: 6 },
+] as const;
+
+function HolofoteConfetti() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      {CONFETTI_PIECES.map((piece, i) => (
+        <span
+          key={i}
+          className="holofote-confetti absolute top-0 rounded-[1px]"
+          style={{
+            left: piece.left,
+            width: piece.size,
+            height: piece.size * 2.2,
+            background: piece.color,
+            opacity: 0,
+            animation: `holofote-confetti-fall ${piece.duration} linear ${piece.delay} infinite`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function HolofoteHeader({ large, vpMax, vhMax }: { large?: boolean; vpMax: number; vhMax: number }) {
+  const titleSize = large ? fluidWH(18, 30, vpMax, vhMax) : "1.5rem";
+  const subtitleSize = large ? fluidWH(11, 14, vpMax, vhMax) : "0.75rem";
+
+  return (
+    <div className="relative mb-2 flex w-full flex-col items-center px-4 text-center">
+      <span className="mb-1 flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-0.5 text-[0.65rem] font-semibold tracking-wide text-rose-300">
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-rose-400"
+          style={{ animation: "holofote-sparkle-twinkle 1.4s ease-in-out infinite" }}
+          aria-hidden
+        />
+        AO VIVO
+      </span>
+      <h2 className="font-black tracking-tight text-neutral-50" style={{ fontSize: titleSize }}>
+        Ranking de <span className="text-amber-300">Vendas</span> ✨
+      </h2>
+      <p className="text-neutral-400" style={{ fontSize: subtitleSize }}>
+        Luzes no palco. Placar em festa.
+      </p>
+    </div>
+  );
+}
+
+function PodiumColumnHolofote({
+  entry,
+  rank,
+  profileHref,
+  large,
+}: {
+  entry: PodiumEntry;
+  rank: 1 | 2 | 3;
+  profileHref: string;
+  large?: boolean;
+}) {
+  const style = HOLOFOTE_STYLES[rank];
+  const isChampion = rank === 1;
+
+  const vpMax = large ? 2000 : 2200;
+  const vhMax = 1080;
+  const sizes = large
+    ? {
+        1: { col: fluid(176, 364, vpMax), ring: fluidWH(124, 250, vpMax, vhMax), block: fluidWH(148, 190, vpMax, vhMax) },
+        2: { col: fluid(136, 280, vpMax), ring: fluidWH(96, 190, vpMax, vhMax), block: fluidWH(104, 132, vpMax, vhMax) },
+        3: { col: fluid(136, 280, vpMax), ring: fluidWH(96, 190, vpMax, vhMax), block: fluidWH(76, 97, vpMax, vhMax) },
+      }[rank]
+    : {
+        1: { col: fluid(132, 240, vpMax), ring: fluid(92, 160, vpMax), block: fluid(92, 195, vpMax) },
+        2: { col: fluid(104, 190, vpMax), ring: fluid(72, 128, vpMax), block: fluid(64, 135, vpMax) },
+        3: { col: fluid(104, 190, vpMax), ring: fluid(72, 128, vpMax), block: fluid(46, 100, vpMax) },
+      }[rank];
+
+  const nameSize = large ? fluidWH(16, 30, vpMax, vhMax) : fluid(12, 20, vpMax);
+  const percentSize = large ? fluidWH(15, 26, vpMax, vhMax) : fluid(12, 18, vpMax);
+  const digitSize = large ? fluidWH(44, 60, vpMax, vhMax) : fluid(28, 56, vpMax);
+
+  return (
+    <div
+      className="relative flex origin-bottom flex-col items-center opacity-0"
+      style={{ width: sizes.col, animation: `podium-rise 0.7s ease-out ${RISE_DELAY_MS[rank]}ms both` }}
+    >
+      {isChampion && (
+        <div
+          className="holofote-starburst pointer-events-none absolute top-[8%] left-1/2"
+          style={{
+            width: large ? fluidWH(260, 420, vpMax, vhMax) : fluid(200, 320, vpMax),
+            height: large ? fluidWH(260, 420, vpMax, vhMax) : fluid(200, 320, vpMax),
+            background:
+              "repeating-conic-gradient(from 0deg, rgba(255,209,102,0.16) 0deg 6deg, transparent 6deg 18deg)",
+            borderRadius: "50%",
+            transform: "translate(-50%, -50%)",
+            animation: "holofote-starburst-spin 14s linear infinite",
+          }}
+          aria-hidden
+        />
+      )}
+
+      <div className="relative" style={{ width: sizes.ring, height: sizes.ring }}>
+        <span
+          className="holofote-ring-pulse pointer-events-none absolute inset-0 rounded-full"
+          style={{ border: `2px solid ${style.ring}`, animation: "holofote-ring-pulse 2.4s ease-out infinite" }}
+          aria-hidden
+        />
+        <span
+          className="holofote-ring-pulse pointer-events-none absolute inset-0 rounded-full"
+          style={{
+            border: `2px solid ${style.ring}`,
+            animation: "holofote-ring-pulse 2.4s ease-out 1.2s infinite",
+          }}
+          aria-hidden
+        />
+        <div
+          className="absolute inset-0 rounded-full"
+          style={{ boxShadow: `0 0 0 3px ${style.ring}, 0 0 26px ${style.glow}` }}
+          aria-hidden
+        />
+        <Link href={profileHref} className="absolute inset-[6%] block overflow-hidden rounded-full">
+          <SellerAvatar photoPath={entry.photoPath} name={entry.name} size="100%" />
+        </Link>
+        <span
+          className="holofote-sparkle pointer-events-none absolute -top-1 -right-1 text-base leading-none select-none"
+          style={{ animation: "holofote-sparkle-twinkle 1.8s ease-in-out infinite" }}
+          aria-hidden
+        >
+          ✨
+        </span>
+      </div>
+
+      <div
+        className="relative mt-3 max-w-full overflow-hidden rounded-lg px-3 py-1.5 text-center"
+        style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${style.ring}4d` }}
+      >
+        <div
+          className="holofote-shine pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage: "linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%)",
+            backgroundSize: "60% 100%",
+            backgroundRepeat: "no-repeat",
+            animation: `holofote-shine-sweep ${3.2 + rank * 0.5}s ease-in-out infinite`,
+          }}
+          aria-hidden
+        />
+        <Link
+          href={profileHref}
+          className="relative block truncate font-semibold text-neutral-50 hover:text-neutral-200"
+          style={{ fontSize: nameSize }}
+        >
+          {entry.name}
+        </Link>
+        <p className="relative font-bold" style={{ fontSize: percentSize, color: style.ring }}>
+          {entry.percent.toFixed(0)}%
+        </p>
+      </div>
+
+      <div
+        className="relative mt-3 flex w-full items-start justify-center overflow-hidden rounded-t-md"
+        style={{ height: sizes.block, background: style.front, boxShadow: `0 0 22px ${style.glow}` }}
+      >
+        <div className="absolute inset-x-0 top-0 h-[3px]" style={{ background: style.top }} aria-hidden />
+        <div
+          className="holofote-shine pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage: "linear-gradient(115deg, transparent 42%, rgba(255,255,255,0.22) 50%, transparent 58%)",
+            backgroundSize: "50% 100%",
+            backgroundRepeat: "no-repeat",
+            animation: `holofote-shine-sweep ${4 + rank * 0.6}s ease-in-out 0.4s infinite`,
+          }}
+          aria-hidden
+        />
+        <span
+          className="relative mt-1 leading-none font-black text-black/25 select-none"
+          style={{ fontFamily: "var(--font-arena-display)", fontSize: digitSize }}
+        >
+          {rank}
+        </span>
       </div>
     </div>
   );
@@ -596,9 +806,16 @@ export function Podium({
 
   const isGame = theme === "game";
   const isZoeira = theme === "zoeira";
-  const isFancy = isGame || isZoeira;
+  const isHolofote = theme === "holofote";
+  const isFancy = isGame || isZoeira || isHolofote;
 
-  const PodiumColumn = isGame ? PodiumColumnGame : isZoeira ? PodiumColumnZoeira : PodiumColumnDefault;
+  const PodiumColumn = isGame
+    ? PodiumColumnGame
+    : isZoeira
+      ? PodiumColumnZoeira
+      : isHolofote
+        ? PodiumColumnHolofote
+        : PodiumColumnDefault;
   const spacerClass = large ? "w-48 sm:w-56" : "w-28 sm:w-36";
   const fancyVpMax = large ? 2000 : 2200;
   const fancyVhMax = 1080;
@@ -606,7 +823,7 @@ export function Podium({
 
   const row = (
     <div
-      className="flex items-end justify-center"
+      className="relative z-[1] flex items-end justify-center"
       style={{ gap: large ? fluidWH(24, 45, fancyVpMax, fancyVhMax) : fluid(16, 34, fancyVpMax) }}
     >
       {second ? (
@@ -624,28 +841,63 @@ export function Podium({
   );
 
   if (isFancy) {
-    const containerClass = `relative mx-auto flex w-fit max-w-full shrink-0 flex-col overflow-hidden rounded-2xl ${
-      isZoeira ? "bg-[#05070f]" : "bg-[#0b1130]"
+    const containerClass = `relative mx-auto flex ${large ? "w-full" : "w-fit"} max-w-full shrink-0 flex-col overflow-hidden rounded-2xl ${
+      isZoeira ? "bg-[#05070f]" : isHolofote ? "bg-[#0c0716]" : "bg-[#0b1130]"
     }`;
     const containerStyle = {
       paddingLeft: large ? fluid(32, 58, fancyVpMax) : fluid(20, 44, fancyVpMax),
       paddingRight: large ? fluid(32, 58, fancyVpMax) : fluid(20, 44, fancyVpMax),
-      paddingTop: isZoeira
-        ? large
-          ? fluidWH(16, 24, fancyVpMax, fancyVhMax)
-          : fluid(16, 28, fancyVpMax)
-        : large
-          ? fluidWH(56, 90, fancyVpMax, fancyVhMax)
-          : fluid(56, 104, fancyVpMax),
+      paddingTop:
+        isZoeira || isHolofote
+          ? large
+            ? fluidWH(16, 24, fancyVpMax, fancyVhMax)
+            : fluid(16, 28, fancyVpMax)
+          : large
+            ? fluidWH(56, 90, fancyVpMax, fancyVhMax)
+            : fluid(56, 104, fancyVpMax),
       paddingBottom: large ? fluid(24, 40, fancyVpMax) : fluid(16, 28, fancyVpMax),
     };
     const glowBackground = isZoeira
       ? "radial-gradient(ellipse 300px 260px at 20% 60%, rgba(34,211,238,0.10), transparent 65%), radial-gradient(ellipse 300px 260px at 80% 60%, rgba(255,122,89,0.10), transparent 65%), radial-gradient(ellipse 480px 300px at 50% 15%, rgba(255,207,64,0.14), transparent 70%)"
-      : "radial-gradient(ellipse 560px 320px at 50% 0%, rgba(255,183,39,0.16), transparent 70%)";
+      : isHolofote
+        ? "radial-gradient(ellipse 340px 300px at 18% 70%, rgba(255,61,129,0.14), transparent 65%), radial-gradient(ellipse 340px 300px at 82% 70%, rgba(155,123,255,0.14), transparent 65%), radial-gradient(ellipse 520px 340px at 50% 10%, rgba(255,209,102,0.18), transparent 70%)"
+        : "radial-gradient(ellipse 560px 320px at 50% 0%, rgba(255,183,39,0.16), transparent 70%)";
 
     return (
       <div className={containerClass} style={containerStyle}>
         <div className="pointer-events-none absolute inset-0" style={{ background: glowBackground }} />
+        {isHolofote && (
+          <>
+            <div
+              className="holofote-beam pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(ellipse 260px 420px at 20% 0%, rgba(255,61,129,0.20), transparent 60%)",
+                animation: "holofote-beam-pulse 3.4s ease-in-out infinite",
+              }}
+              aria-hidden
+            />
+            <div
+              className="holofote-beam pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(ellipse 260px 420px at 80% 0%, rgba(155,123,255,0.20), transparent 60%)",
+                animation: "holofote-beam-pulse 3.4s ease-in-out 1.1s infinite",
+              }}
+              aria-hidden
+            />
+            <div
+              className="holofote-beam pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(ellipse 300px 460px at 50% 0%, rgba(255,209,102,0.22), transparent 62%)",
+                animation: "holofote-beam-pulse 3.4s ease-in-out 2.2s infinite",
+              }}
+              aria-hidden
+            />
+            <HolofoteConfetti />
+          </>
+        )}
         {isGame && (
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.06]"
@@ -657,13 +909,26 @@ export function Podium({
           />
         )}
         {isZoeira && <ZoeiraHeader large={large} vpMax={fancyVpMax} vhMax={fancyVhMax} />}
+        {isHolofote && <HolofoteHeader large={large} vpMax={fancyVpMax} vhMax={fancyVhMax} />}
         {row}
+        {isZoeira && (
+          <span
+            className="pointer-events-none absolute bottom-2 left-1/2 z-[2] hidden -translate-x-1/2 rotate-2 text-neutral-500 lg:block"
+            style={{
+              fontFamily: "var(--font-zoeira-doodle)",
+              fontSize: large ? fluidWH(12, 17, fancyVpMax, fancyVhMax) : "1.1rem",
+            }}
+            aria-hidden
+          >
+            Se tem lead, tem esperança.
+          </span>
+        )}
       </div>
     );
   }
 
   const containerClass = large
-    ? "relative flex items-end justify-center gap-10 overflow-hidden rounded-2xl bg-neutral-900 px-10 pt-12 pb-0 sm:gap-16"
+    ? "relative flex w-full items-end justify-center gap-10 overflow-hidden rounded-2xl bg-neutral-900 px-10 pt-12 pb-0 sm:gap-16"
     : "relative flex items-end justify-center gap-4 overflow-hidden rounded-2xl bg-neutral-900 px-6 pt-8 pb-0 sm:gap-8";
   const glowBackground = "radial-gradient(ellipse 480px 260px at 50% 0%, rgba(251,191,36,0.10), transparent 70%)";
 
