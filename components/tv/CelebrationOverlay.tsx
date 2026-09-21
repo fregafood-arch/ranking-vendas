@@ -44,7 +44,16 @@ export function CelebrationOverlay({
     const video = videoRef.current;
     if (video) {
       video.currentTime = 0;
-      video.play().catch(() => {});
+      video.muted = false;
+      video.play().catch(() => {
+        // Navegador bloqueou autoplay com som (comum numa TV sem nenhuma
+        // interação humana na página) -- toca mudo em vez de não tocar
+        // nada. Mudo é sempre permitido, então o vídeo pelo menos aparece;
+        // o som volta a funcionar sozinho assim que a página receber
+        // qualquer clique/toque (ver listener global em TVModeClient).
+        video.muted = true;
+        video.play().catch(() => {});
+      });
       video.addEventListener("ended", advanceOnce);
     }
 
