@@ -13,7 +13,7 @@ export default async function EditPeriodPage({
 
   const { data: period } = await supabase
     .from("periods")
-    .select("id, type, label, start_date, end_date")
+    .select("id, type, label, start_date, end_date, tv_hide_podium, tv_hide_stats, tv_hide_ranking_list")
     .eq("id", id)
     .single();
 
@@ -34,6 +34,9 @@ export default async function EditPeriodPage({
           label: period.label,
           startDate: period.start_date,
           endDate: period.end_date,
+          tvHidePodium: period.tv_hide_podium,
+          tvHideStats: period.tv_hide_stats,
+          tvHideRankingList: period.tv_hide_ranking_list,
         }}
       />
     </div>

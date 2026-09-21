@@ -10,6 +10,7 @@ import { formatIndicatorValue } from "@/lib/format";
 import { getActiveTheme } from "@/lib/theme";
 import { getCurrentProfile } from "@/lib/auth/get-current-profile";
 import { ThemeSwitcher } from "@/components/admin/ThemeSwitcher";
+import { QuickResultRow } from "@/components/ranking/QuickResultRow";
 
 export default async function RankingPage({
   searchParams,
@@ -82,6 +83,8 @@ export default async function RankingPage({
             : "—",
         percent: row.primary_attainment_pct ?? 0,
         score: row.general_score ?? 0,
+        primaryIndicatorId: row.primary_indicator_id,
+        primaryIndicatorName: primaryIndicator?.name ?? null,
       };
     });
 
@@ -140,6 +143,31 @@ export default async function RankingPage({
           </aside>
         )}
       </div>
+
+      {profile.role === "ADMIN" && rows.length > 0 && (
+        <section className="space-y-3 rounded-2xl bg-neutral-900 p-3">
+          <div className="px-2 pt-1">
+            <h2 className="text-lg font-medium text-neutral-100">Lançamento rápido</h2>
+            <p className="text-sm text-neutral-500">
+              Adicione ou retire um valor do indicador principal de cada vendedor sem sair desta tela.
+            </p>
+          </div>
+          <div className="space-y-0.5">
+            {rows.map((row) => (
+              <QuickResultRow
+                key={row.sellerId}
+                rank={row.rank}
+                sellerId={row.sellerId}
+                name={row.name}
+                photoPath={row.photoPath}
+                resultLabel={row.resultLabel}
+                indicatorId={row.primaryIndicatorId}
+                indicatorName={row.primaryIndicatorName}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {profile.role === "ADMIN" && (
         <section className="space-y-3">

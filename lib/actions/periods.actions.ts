@@ -17,6 +17,14 @@ function readPeriodFields(formData: FormData) {
   });
 }
 
+function readTvVisibilityFields(formData: FormData) {
+  return {
+    tv_hide_podium: formData.get("tvHidePodium") === "on",
+    tv_hide_stats: formData.get("tvHideStats") === "on",
+    tv_hide_ranking_list: formData.get("tvHideRankingList") === "on",
+  };
+}
+
 function friendlyError(message: string, code?: string) {
   if (code === "23505") return "Já existe um período idêntico (mesmo tipo e datas).";
   return message;
@@ -41,6 +49,7 @@ export async function createPeriod(
     label,
     start_date: startDate,
     end_date: endDate,
+    ...readTvVisibilityFields(formData),
   });
 
   if (error) {
@@ -68,7 +77,13 @@ export async function updatePeriod(
 
   const { error } = await supabase
     .from("periods")
-    .update({ type, label, start_date: startDate, end_date: endDate })
+    .update({
+      type,
+      label,
+      start_date: startDate,
+      end_date: endDate,
+      ...readTvVisibilityFields(formData),
+    })
     .eq("id", periodId);
 
   if (error) {

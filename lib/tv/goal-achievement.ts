@@ -1,5 +1,10 @@
 export type GoalSnapshot = { key: string; percent: number };
 
+/** Igual a GoalSnapshot, mas para a meta principal individual de um
+ * vendedor -- `key` é o próprio `sellerId`, e `name` serve pra montar o
+ * texto da comemoração ("Fulano bateu a meta"). */
+export type SellerGoalSnapshot = GoalSnapshot & { sellerId: string; name: string };
+
 /**
  * Metas (escopo "Toda a empresa") que acabaram de cruzar de <100% para
  * >=100% entre o snapshot anterior e o atual -- dispara a comemoração só

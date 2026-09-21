@@ -110,6 +110,54 @@ export async function updateSalesResult(
   redirect("/admin/resultados");
 }
 
+/**
+ * Lançamento rápido a partir da lista do Ranking (item 1 do mapeamento de
+ * melhorias): grava um ajuste do dia para o indicador principal do vendedor
+ * sem sair da tela, em vez de abrir o formulário completo de Resultados.
+ * "Retirar" grava o mesmo tipo de linha com valor negativo (ver
+ * 0011_allow_negative_adjustments.sql) em vez de editar/apagar um
+ * lançamento existente, preservando o histórico.
+ */
+export async function quickAdjustSalesResult({
+  sellerId,
+  indicatorId,
+  amount,
+  direction,
+}: {
+  sellerId: string;
+  indicatorId: string;
+  amount: number;
+  direction: "add" | "remove";
+}): Promise<void> {
+  const profile = await requireAdmin();
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("Informe um valor maior que zero.");
+  }
+
+  const supabase = await createClient();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const { error } = await supabase.from("sales_results").insert({
+    seller_id: sellerId,
+    indicator_id: indicatorId,
+    value: direction === "add" ? amount : -amount,
+    entry_date: today,
+    notes: "Lançamento rápido (Ranking)",
+    recorded_by: profile.id,
+  });
+
+  if (error) {
+    throw new Error(`Não foi possível lançar: ${error.message}`);
+  }
+
+  await evaluateAchievementsForActivePeriods(supabase);
+
+  revalidatePath("/ranking");
+  revalidatePath("/dashboard");
+  revalidatePath("/tv");
+}
+
 export async function deleteSalesResult(resultId: string): Promise<void> {
   await requireAdmin();
 

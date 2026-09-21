@@ -20,6 +20,9 @@ export function PeriodForm({
     label?: string;
     startDate?: string;
     endDate?: string;
+    tvHidePodium?: boolean;
+    tvHideStats?: boolean;
+    tvHideRankingList?: boolean;
   };
   submitLabel: string;
 }) {
@@ -86,6 +89,42 @@ export function PeriodForm({
             defaultValue={defaultValues?.endDate}
             className={inputClass}
           />
+        </div>
+      </div>
+
+      <div className="space-y-2 rounded-md border border-neutral-800 p-4">
+        <p className={labelClass}>Modo TV — o que este período mostra</p>
+        <p className="text-xs text-neutral-500">
+          Desmarque pra tirar de rodízio, sem afetar os outros períodos.
+        </p>
+        <div className="space-y-2 pt-1">
+          <label className="flex items-center gap-2 text-sm text-neutral-300">
+            <input
+              type="checkbox"
+              name="tvHidePodium"
+              defaultChecked={defaultValues?.tvHidePodium}
+              className="h-4 w-4 rounded border-neutral-700 bg-neutral-950"
+            />
+            Ocultar pódio
+          </label>
+          <label className="flex items-center gap-2 text-sm text-neutral-300">
+            <input
+              type="checkbox"
+              name="tvHideStats"
+              defaultChecked={defaultValues?.tvHideStats}
+              className="h-4 w-4 rounded border-neutral-700 bg-neutral-950"
+            />
+            Ocultar metas/estatísticas
+          </label>
+          <label className="flex items-center gap-2 text-sm text-neutral-300">
+            <input
+              type="checkbox"
+              name="tvHideRankingList"
+              defaultChecked={defaultValues?.tvHideRankingList}
+              className="h-4 w-4 rounded border-neutral-700 bg-neutral-950"
+            />
+            Ocultar lista completa do ranking
+          </label>
         </div>
       </div>
 

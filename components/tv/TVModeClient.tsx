@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { findOvertakers, type RankEntry } from "@/lib/tv/overtake";
-import { findNewlyAchievedGoals, type GoalSnapshot } from "@/lib/tv/goal-achievement";
+import { findNewlyAchievedGoals, type GoalSnapshot, type SellerGoalSnapshot } from "@/lib/tv/goal-achievement";
 import { getRankDirection, type RankDirection } from "@/lib/tv/rank-direction";
 import type { CelebrationEvent } from "@/lib/tv/celebration";
 import { CelebrationOverlay } from "@/components/tv/CelebrationOverlay";
@@ -23,6 +23,14 @@ export type TVSlideGroup = {
   /** % de atingimento das metas de escopo "Toda a empresa" deste período,
    * usado só para detectar o momento em que uma meta é batida. */
   globalGoals: GoalSnapshot[];
+  /** % de atingimento da meta principal de cada vendedor neste período,
+   * usado só para detectar o momento em que UM vendedor bate a própria
+   * meta (comemoração individual, separada da meta da empresa toda). */
+  sellerGoals: SellerGoalSnapshot[];
+  /** Item 14 do mapeamento de melhorias: tira a lista completa do ranking
+   * do rodízio deste período específico, configurável em Administração >
+   * Períodos, sem afetar os outros períodos ativos. */
+  hideRankingList?: boolean;
 };
 
 let celebrationKeySeq = 0;
@@ -46,6 +54,7 @@ function nextCelebrationKey(prefix: string) {
 export function TVModeClient({
   groups,
   announcementsSlide,
+  flashChallengeSlide,
   rotationSeconds = 14,
   refreshSeconds = 45,
 }: {
@@ -53,11 +62,15 @@ export function TVModeClient({
   /** Slide de avisos (Administração > Avisos) -- não é por período, então
    * entra uma única vez no rodízio geral, não repetido a cada grupo. */
   announcementsSlide?: ReactNode | null;
+  /** Slide do Desafio Relâmpago ativo (Administração > Desafios) -- mesmo
+   * padrão do slide de avisos: uma vez só no rodízio geral. */
+  flashChallengeSlide?: ReactNode | null;
   rotationSeconds?: number;
   refreshSeconds?: number;
 }) {
   const previousRanksRef = useRef<Map<number, Map<string, number>> | null>(null);
   const previousGoalsRef = useRef<Map<number, Map<string, number>> | null>(null);
+  const previousSellerGoalsRef = useRef<Map<number, Map<string, number>> | null>(null);
 
   // Quem subiu/desceu na última atualização -- precisa ser ESTADO (não
   // ref), porque tem que continuar valendo até a próxima atualização
@@ -73,7 +86,8 @@ export function TVModeClient({
     const rankingSlide = (
       <TVRankingListSlide rows={group.rankingRows} directions={directionsByGroup.get(groupIndex) ?? null} />
     );
-    return [...group.slides, rankingSlide].map((slide, slideIndex) => ({
+    const slides = group.hideRankingList ? group.slides : [...group.slides, rankingSlide];
+    return slides.map((slide, slideIndex) => ({
       key: `${groupIndex}-${slideIndex}`,
       periodLabel: group.periodLabel,
       slide,
@@ -82,6 +96,14 @@ export function TVModeClient({
 
   if (announcementsSlide) {
     flatSlides.push({ key: "announcements", periodLabel: "Avisos", slide: announcementsSlide });
+  }
+
+  if (flashChallengeSlide) {
+    flatSlides.push({
+      key: "flash-challenge",
+      periodLabel: "Desafio Relâmpago",
+      slide: flashChallengeSlide,
+    });
   }
 
   const [index, setIndex] = useState(0);
@@ -108,8 +130,10 @@ export function TVModeClient({
   useEffect(() => {
     const previousRanks = previousRanksRef.current;
     const previousGoals = previousGoalsRef.current;
+    const previousSellerGoals = previousSellerGoalsRef.current;
     const nextRanks = new Map<number, Map<string, number>>();
     const nextGoals = new Map<number, Map<string, number>>();
+    const nextSellerGoals = new Map<number, Map<string, number>>();
     const nextDirections = new Map<number, Map<string, RankDirection>>();
     const newEvents: CelebrationEvent[] = [];
 
@@ -149,6 +173,23 @@ export function TVModeClient({
           });
         }
       }
+
+      const sellerGoalMap = new Map(group.sellerGoals.map((goal) => [goal.key, goal.percent]));
+      nextSellerGoals.set(groupIndex, sellerGoalMap);
+
+      const previousSellerGoalMap = previousSellerGoals?.get(groupIndex);
+      if (previousSellerGoalMap) {
+        const sellerNameByKey = new Map(group.sellerGoals.map((goal) => [goal.key, goal.name]));
+        for (const achieved of findNewlyAchievedGoals(previousSellerGoalMap, group.sellerGoals)) {
+          newEvents.push({
+            kind: "seller-goal",
+            key: nextCelebrationKey("seller-goal"),
+            sellerId: achieved.key,
+            name: sellerNameByKey.get(achieved.key) ?? "Vendedor",
+            periodLabel: group.periodLabel,
+          });
+        }
+      }
     });
 
     if (previousRanks && newEvents.length > 0) {
@@ -157,6 +198,7 @@ export function TVModeClient({
     setDirectionsByGroup(nextDirections);
     previousRanksRef.current = nextRanks;
     previousGoalsRef.current = nextGoals;
+    previousSellerGoalsRef.current = nextSellerGoals;
   }, [groups]);
 
   return (

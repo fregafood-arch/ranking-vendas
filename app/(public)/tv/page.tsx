@@ -2,6 +2,7 @@ import { getTvClient } from "@/lib/supabase/tv";
 import { getGeneralRanking, getIndicatorAttainment } from "@/lib/ranking/scoring";
 import { Podium } from "@/components/ranking/Podium";
 import { TVModeClient, type TVSlideGroup } from "@/components/tv/TVModeClient";
+import { FlashChallengeCountdown } from "@/components/tv/FlashChallengeCountdown";
 import { formatIndicatorValue } from "@/lib/format";
 import { getActiveTheme } from "@/lib/theme";
 
@@ -30,7 +31,9 @@ export default async function TvModePage() {
 
   const { data: periods } = await supabase
     .from("periods")
-    .select("id, label, is_active, start_date, end_date")
+    .select(
+      "id, label, is_active, start_date, end_date, tv_hide_podium, tv_hide_stats, tv_hide_ranking_list",
+    )
     .order("start_date", { ascending: false });
 
   if (!periods?.length) {
@@ -44,19 +47,32 @@ export default async function TvModePage() {
   const activePeriods = periods.filter((candidate) => candidate.is_active);
   const periodsToShow = activePeriods.length > 0 ? activePeriods : [periods[0]];
 
-  const [{ data: indicators }, { data: teams }, { data: sellers }, { data: announcements }, theme] =
-    await Promise.all([
-      supabase.from("indicators").select("id, name, unit").eq("is_active", true).order("name"),
-      supabase.from("teams").select("id, name").eq("is_active", true).order("name"),
-      supabase.from("sellers").select("id, full_name, photo_path, team_id"),
-      supabase
-        .from("announcements")
-        .select("id, title, body")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(6),
-      getActiveTheme(supabase),
-    ]);
+  const [
+    { data: indicators },
+    { data: teams },
+    { data: sellers },
+    { data: announcements },
+    { data: flashChallenges },
+    theme,
+  ] = await Promise.all([
+    supabase.from("indicators").select("id, name, unit").eq("is_active", true).order("name"),
+    supabase.from("teams").select("id, name").eq("is_active", true).order("name"),
+    supabase.from("sellers").select("id, full_name, photo_path, team_id"),
+    supabase
+      .from("announcements")
+      .select("id, title, body")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(6),
+    supabase
+      .from("flash_challenges")
+      .select("id, title, description, prize_label, ends_at")
+      .eq("is_active", true)
+      .gt("ends_at", new Date().toISOString())
+      .order("ends_at", { ascending: true })
+      .limit(1),
+    getActiveTheme(supabase),
+  ]);
 
   const sellerById = new Map((sellers ?? []).map((seller) => [seller.id, seller]));
   const sellerTeamById = new Map((sellers ?? []).map((seller) => [seller.id, seller.team_id]));
@@ -154,6 +170,10 @@ export default async function TvModePage() {
         .map((card) => ({ key: card.key, percent: card.percent }));
 
       const rankedSellers = ranking.filter((row) => row.primary_attainment_pct !== null);
+      const rankedSellerIds = new Set(rankedSellers.map((row) => row.seller_id));
+      const sellerGoals = rows
+        .filter((row) => rankedSellerIds.has(row.sellerId))
+        .map((row) => ({ key: row.sellerId, sellerId: row.sellerId, name: row.name, percent: row.percent }));
       const metGoalCount = rankedSellers.filter((row) => (row.primary_attainment_pct ?? 0) >= 100).length;
       const belowGoalCount = rankedSellers.length - metGoalCount;
       const averageAttainment = rankedSellers.length
@@ -251,10 +271,15 @@ export default async function TvModePage() {
 
       return {
         periodLabel: period.label,
-        slides: [slide1, slide2],
+        slides: [
+          ...(period.tv_hide_podium ? [] : [slide1]),
+          ...(period.tv_hide_stats ? [] : [slide2]),
+        ],
+        hideRankingList: period.tv_hide_ranking_list,
         ranking: rows.map((row) => ({ sellerId: row.sellerId, rank: row.rank, name: row.name })),
         rankingRows: rows,
         globalGoals,
+        sellerGoals,
       };
     }),
   );
@@ -317,5 +342,54 @@ export default async function TvModePage() {
       </div>
     ) : null;
 
-  return <TVModeClient groups={groups} announcementsSlide={announcementsSlide} />;
+  const activeChallenge = flashChallenges?.[0] ?? null;
+  const flashChallengeSlide = activeChallenge ? (
+    <div
+      className="relative flex h-full flex-col items-center gap-6 overflow-hidden px-16 py-6 text-center"
+      style={{ justifyContent: "safe center" }}
+    >
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: "radial-gradient(ellipse 720px 420px at 50% 0%, rgba(245,158,11,0.16), transparent 70%)",
+        }}
+        aria-hidden
+      />
+
+      <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/15 text-4xl">
+        ⚡
+      </span>
+      <p className="relative text-lg font-bold tracking-widest text-amber-400 uppercase">
+        Desafio Relâmpago
+      </p>
+      <h2 className="relative max-w-4xl text-5xl font-black text-balance text-neutral-50">
+        {activeChallenge.title}
+      </h2>
+      {activeChallenge.description && (
+        <p className="relative max-w-3xl text-xl text-balance text-neutral-400">
+          {activeChallenge.description}
+        </p>
+      )}
+      <div className="relative flex flex-wrap items-center justify-center gap-8">
+        <div className="rounded-2xl border border-amber-500/30 bg-neutral-900 px-8 py-5">
+          <p className="text-sm text-neutral-500">Prêmio</p>
+          <p className="text-3xl font-bold text-amber-400">🏆 {activeChallenge.prize_label}</p>
+        </div>
+        <div className="rounded-2xl border border-neutral-800 bg-neutral-900 px-8 py-5">
+          <p className="text-sm text-neutral-500">Tempo restante</p>
+          <p className="text-3xl font-bold text-neutral-50">
+            <FlashChallengeCountdown endsAt={activeChallenge.ends_at} />
+          </p>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
+  return (
+    <TVModeClient
+      groups={groups}
+      announcementsSlide={announcementsSlide}
+      flashChallengeSlide={flashChallengeSlide}
+    />
+  );
 }

@@ -12,6 +12,7 @@ import type { CelebrationEvent } from "@/lib/tv/celebration";
 const FALLBACK_MS: Record<CelebrationEvent["kind"], number> = {
   overtake: 10000,
   goal: 26000,
+  "seller-goal": 26000,
 };
 
 /**
@@ -50,6 +51,8 @@ export function CelebrationOverlay({
     };
 
     const video = current.kind === "overtake" ? overtakeVideoRef.current : goalVideoRef.current;
+    // "goal" (meta da empresa) e "seller-goal" (meta individual) tocam o
+    // mesmo vídeo, só o texto do card muda -- ver JSX abaixo.
     if (video) {
       video.currentTime = 0;
       video.muted = false;
@@ -96,7 +99,7 @@ export function CelebrationOverlay({
         muted
         playsInline
         className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
-          current?.kind === "goal" ? "opacity-90" : "opacity-0"
+          current?.kind === "goal" || current?.kind === "seller-goal" ? "opacity-90" : "opacity-0"
         }`}
         aria-hidden
       />
@@ -112,6 +115,14 @@ export function CelebrationOverlay({
                 <p className="text-xl font-bold tracking-widest text-amber-300">ULTRAPASSAGEM!</p>
                 <p className="mt-2 text-6xl font-black text-white drop-shadow-lg">{current.name}</p>
                 <p className="mt-2 text-3xl font-bold text-emerald-400">Novo {current.rank}º lugar!</p>
+              </>
+            ) : current.kind === "seller-goal" ? (
+              <>
+                <p className="text-xl font-bold tracking-widest text-emerald-300">META BATIDA!</p>
+                <p className="mt-2 text-6xl font-black text-white drop-shadow-lg">{current.name}</p>
+                <p className="mt-2 text-3xl font-bold text-amber-400">
+                  Bateu a meta {current.periodLabel}! 🎉
+                </p>
               </>
             ) : (
               <>
