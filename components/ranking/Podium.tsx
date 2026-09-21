@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { SellerAvatar } from "@/components/sellers/SellerAvatar";
 import type { AppTheme } from "@/lib/theme-types";
 
@@ -784,6 +785,266 @@ function PodiumColumnHolofote({
   );
 }
 
+// ============================================================================
+// Tema "futurista" — escudos de gema (arte fornecida pelo usuário) flutuando
+// num portal neon, com foto do vendedor no círculo do escudo e nome/resultado
+// no retângulo abaixo. Validado com o usuário num mockup em Artifact (fundo
+// futurista adaptado de um HTML enviado por ele, raios de luz só no 1º lugar,
+// flutuação leve e independente por coluna) antes de virar este componente.
+// ============================================================================
+
+const FUTURISTA_STYLES: Record<1 | 2 | 3, { shield: string; accent: string; accentSoft: string; glow: string }> = {
+  1: { shield: "/podium/shield-blue.webp", accent: "#2f5fe0", accentSoft: "#7fa2ff", glow: "#2f5fe0" },
+  2: { shield: "/podium/shield-teal.webp", accent: "#17c9b5", accentSoft: "#7bf2e2", glow: "#17c9b5" },
+  3: { shield: "/podium/shield-red.webp", accent: "#d43a3a", accentSoft: "#ff9a8f", glow: "#d43a3a" },
+};
+
+// Mesma flutuação pra escudo e etiqueta de cada coluna, com duração/atraso
+// própria por posição (item pedido pelo usuário: "leve, como se estivessem
+// flutuando", cada um com seu próprio ritmo pra não parecerem sincronizados).
+const FUTURISTA_FLOAT: Record<1 | 2 | 3, string> = {
+  1: "futurista-float 4.6s ease-in-out infinite",
+  2: "futurista-float 5.3s ease-in-out -1.6s infinite",
+  3: "futurista-float 5s ease-in-out -3s infinite",
+};
+
+function PodiumColumnFuturista({
+  entry,
+  rank,
+  profileHref,
+  large,
+}: {
+  entry: PodiumEntry;
+  rank: 1 | 2 | 3;
+  profileHref: string;
+  large?: boolean;
+}) {
+  const style = FUTURISTA_STYLES[rank];
+  const isChampion = rank === 1;
+  const vpMax = large ? 2000 : 2200;
+  const vhMax = 1080;
+
+  const colWidth = large
+    ? { 1: fluid(210, 360, vpMax), 2: fluid(164, 280, vpMax), 3: fluid(152, 256, vpMax) }[rank]
+    : { 1: fluid(150, 250, vpMax), 2: fluid(118, 195, vpMax), 3: fluid(110, 178, vpMax) }[rank];
+
+  const nameSize = large ? fluidWH(11, 17, vpMax, vhMax) : fluid(9, 13, vpMax);
+  const resultSize = large ? fluidWH(12, 19, vpMax, vhMax) : fluid(10, 15, vpMax);
+  const labelSize = large
+    ? fluidWH(10, isChampion ? 16 : 13, vpMax, vhMax)
+    : fluid(9, isChampion ? 12.5 : 10.5, vpMax);
+  const floatAnim = FUTURISTA_FLOAT[rank];
+
+  const depthStyle: CSSProperties =
+    rank === 2
+      ? { transform: "translateY(6%)", filter: "brightness(0.9)" }
+      : rank === 3
+        ? { transform: "translateY(11%)", filter: "brightness(0.78)" }
+        : {};
+
+  return (
+    <div
+      className="relative flex origin-bottom flex-col items-center opacity-0"
+      style={{
+        width: colWidth,
+        zIndex: isChampion ? 3 : rank,
+        animation: `podium-rise 0.7s ease-out ${RISE_DELAY_MS[rank]}ms both`,
+        ...depthStyle,
+      }}
+    >
+      <div
+        className="pointer-events-none absolute bottom-[6%] rounded-full blur-md"
+        style={{
+          width: "78%",
+          aspectRatio: "3 / 1",
+          background: `radial-gradient(ellipse, ${style.glow}aa, transparent 70%)`,
+        }}
+        aria-hidden
+      />
+
+      {isChampion && (
+        <div
+          className="futurista-rays pointer-events-none absolute top-[34%] left-1/2"
+          style={{
+            width: "165%",
+            aspectRatio: "1",
+            background: "repeating-conic-gradient(from 0deg, #ffe9a629 0deg 3deg, transparent 3deg 17deg)",
+            WebkitMask: "radial-gradient(circle, #000 0%, #000 18%, transparent 62%)",
+            mask: "radial-gradient(circle, #000 0%, #000 18%, transparent 62%)",
+            opacity: 0.55,
+            animation: "holofote-starburst-spin 90s linear infinite",
+          }}
+          aria-hidden
+        />
+      )}
+
+      <div className="futurista-float relative w-full" style={{ animation: floatAnim }}>
+        <img src={style.shield} alt="" draggable={false} className="block w-full h-auto select-none" />
+
+        <Link
+          href={profileHref}
+          className="absolute block overflow-hidden rounded-full"
+          style={{ left: "32%", top: "25.3%", width: "36%", aspectRatio: "1" }}
+        >
+          <SellerAvatar photoPath={entry.photoPath} name={entry.name} size="100%" />
+        </Link>
+
+        <div
+          className="absolute flex flex-col items-center justify-center gap-0.5 rounded px-[4%] text-center"
+          style={{
+            left: "25.6%",
+            top: "51%",
+            width: "49%",
+            height: "10.3%",
+            background: "linear-gradient(180deg, rgba(0,0,0,0.47), rgba(0,0,0,0.58))",
+            boxShadow: "inset 0 0 0 1px rgba(255,233,166,0.15), inset 0 1px 0 rgba(255,255,255,0.08)",
+          }}
+        >
+          <Link
+            href={profileHref}
+            className="block max-w-full shrink-0 truncate font-bold text-white hover:text-neutral-200"
+            style={{
+              fontFamily: "var(--font-arena-display)",
+              fontSize: nameSize,
+              lineHeight: 1.15,
+              textShadow: "0 1px 3px rgba(0,0,0,0.75)",
+            }}
+          >
+            {entry.name}
+          </Link>
+          <p
+            className="shrink-0 font-bold whitespace-nowrap"
+            style={{
+              fontFamily: "var(--font-futurista-body)",
+              fontSize: resultSize,
+              lineHeight: 1.1,
+              color: style.accentSoft,
+              textShadow: "0 1px 3px rgba(0,0,0,0.75)",
+            }}
+          >
+            {entry.resultLabel}
+          </p>
+        </div>
+      </div>
+
+      <span
+        className="futurista-float relative mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 whitespace-nowrap uppercase"
+        style={{
+          animation: floatAnim,
+          fontFamily: "var(--font-arena-display)",
+          fontWeight: 800,
+          fontSize: labelSize,
+          letterSpacing: "0.12em",
+          color: style.accentSoft,
+          background: `linear-gradient(180deg, ${style.accent}3a, ${style.accent}10)`,
+          border: `1px solid ${style.accentSoft}`,
+          boxShadow: `0 0 16px ${style.glow}75`,
+        }}
+      >
+        <span
+          aria-hidden
+          style={{
+            width: 5,
+            height: 5,
+            background: style.accentSoft,
+            transform: "rotate(45deg)",
+            boxShadow: `0 0 6px ${style.glow}75`,
+          }}
+        />
+        {rank}º lugar
+        <span
+          aria-hidden
+          style={{
+            width: 5,
+            height: 5,
+            background: style.accentSoft,
+            transform: "rotate(45deg)",
+            boxShadow: `0 0 6px ${style.glow}75`,
+          }}
+        />
+      </span>
+    </div>
+  );
+}
+
+function FuturistaArena() {
+  return (
+    <>
+      <div
+        className="pointer-events-none absolute top-[38%] left-1/2"
+        style={{ width: "56%", aspectRatio: "1", transform: "translate(-50%, -50%)", opacity: 0.8 }}
+        aria-hidden
+      >
+        <span
+          className="futurista-ring absolute inset-0 rounded-full"
+          style={{
+            WebkitMask: "radial-gradient(transparent 68.5%, #000 69%)",
+            mask: "radial-gradient(transparent 68.5%, #000 69%)",
+            background:
+              "conic-gradient(from 0deg, transparent 0deg, #4bdfff 30deg, #a7f6ff 85deg, transparent 90deg, transparent 130deg, #9777ff 180deg, #c9aaff 225deg, transparent 230deg, transparent 290deg, #4bdfff 340deg, transparent 360deg)",
+            animation: "arena-ring-spin 34s linear infinite",
+          }}
+        />
+        <span
+          className="futurista-ring absolute rounded-full"
+          style={{
+            inset: "4.5%",
+            opacity: 0.5,
+            background: "repeating-conic-gradient(#4bdfff 0deg 1deg, transparent 1deg 7deg)",
+            WebkitMask: "radial-gradient(transparent 69%, #000 69.5%)",
+            mask: "radial-gradient(transparent 69%, #000 69.5%)",
+            animation: "arena-ring-spin 50s linear infinite reverse",
+          }}
+        />
+      </div>
+      <div
+        className="pointer-events-none absolute inset-x-0"
+        style={{
+          top: "71%",
+          height: 1,
+          background: "linear-gradient(90deg, transparent, #20d9ff90, #9777ff90, transparent)",
+          boxShadow: "0 0 24px 3px #238dff40",
+        }}
+        aria-hidden
+      />
+      <div
+        className="futurista-grid pointer-events-none absolute"
+        style={{
+          top: "71%",
+          bottom: 0,
+          left: "-60%",
+          right: "-60%",
+          overflow: "hidden",
+          backgroundImage:
+            "linear-gradient(#18c8f830 1px, transparent 1px), linear-gradient(90deg, #7661ff35 1px, transparent 1px)",
+          backgroundSize: "46px 46px",
+          transform: "rotateX(58deg)",
+          transformOrigin: "top",
+          WebkitMaskImage: "linear-gradient(transparent, #000 42%, #000 78%, transparent)",
+          maskImage: "linear-gradient(transparent, #000 42%, #000 78%, transparent)",
+          animation: "futurista-grid-scroll 4.2s linear infinite",
+        }}
+        aria-hidden
+      />
+      <div
+        className="futurista-scan pointer-events-none absolute inset-0"
+        style={{
+          opacity: 0.35,
+          backgroundImage: "linear-gradient(transparent 49.8%, #50caff12 50%, transparent 50.3%)",
+          backgroundSize: "100% 220%",
+          animation: "futurista-scan-move 13s linear infinite",
+        }}
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ boxShadow: "inset 0 0 70px 22px #02040b80" }}
+        aria-hidden
+      />
+    </>
+  );
+}
+
 export function Podium({
   entries,
   periodId,
@@ -807,7 +1068,8 @@ export function Podium({
   const isGame = theme === "game";
   const isZoeira = theme === "zoeira";
   const isHolofote = theme === "holofote";
-  const isFancy = isGame || isZoeira || isHolofote;
+  const isFuturista = theme === "futurista";
+  const isFancy = isGame || isZoeira || isHolofote || isFuturista;
 
   const PodiumColumn = isGame
     ? PodiumColumnGame
@@ -815,7 +1077,9 @@ export function Podium({
       ? PodiumColumnZoeira
       : isHolofote
         ? PodiumColumnHolofote
-        : PodiumColumnDefault;
+        : isFuturista
+          ? PodiumColumnFuturista
+          : PodiumColumnDefault;
   const spacerClass = large ? "w-48 sm:w-56" : "w-28 sm:w-36";
   const fancyVpMax = large ? 2000 : 2200;
   const fancyVhMax = 1080;
@@ -842,13 +1106,19 @@ export function Podium({
 
   if (isFancy) {
     const containerClass = `relative mx-auto flex ${large ? "w-full" : "w-fit"} max-w-full shrink-0 flex-col overflow-hidden rounded-2xl ${
-      isZoeira ? "bg-[#05070f]" : isHolofote ? "bg-[#0c0716]" : "bg-[#0b1130]"
+      isZoeira
+        ? "bg-[#05070f]"
+        : isHolofote
+          ? "bg-[#0c0716]"
+          : isFuturista
+            ? "bg-[#030611]"
+            : "bg-[#0b1130]"
     }`;
     const containerStyle = {
       paddingLeft: large ? fluid(32, 58, fancyVpMax) : fluid(20, 44, fancyVpMax),
       paddingRight: large ? fluid(32, 58, fancyVpMax) : fluid(20, 44, fancyVpMax),
       paddingTop:
-        isZoeira || isHolofote
+        isZoeira || isHolofote || isFuturista
           ? large
             ? fluidWH(16, 24, fancyVpMax, fancyVhMax)
             : fluid(16, 28, fancyVpMax)
@@ -861,11 +1131,14 @@ export function Podium({
       ? "radial-gradient(ellipse 300px 260px at 20% 60%, rgba(34,211,238,0.10), transparent 65%), radial-gradient(ellipse 300px 260px at 80% 60%, rgba(255,122,89,0.10), transparent 65%), radial-gradient(ellipse 480px 300px at 50% 15%, rgba(255,207,64,0.14), transparent 70%)"
       : isHolofote
         ? "radial-gradient(ellipse 340px 300px at 18% 70%, rgba(255,61,129,0.14), transparent 65%), radial-gradient(ellipse 340px 300px at 82% 70%, rgba(155,123,255,0.14), transparent 65%), radial-gradient(ellipse 520px 340px at 50% 10%, rgba(255,209,102,0.18), transparent 70%)"
-        : "radial-gradient(ellipse 560px 320px at 50% 0%, rgba(255,183,39,0.16), transparent 70%)";
+        : isFuturista
+          ? "radial-gradient(ellipse 300px 220px at 18% 60%, rgba(10,79,176,0.20), transparent 46%), radial-gradient(ellipse 300px 220px at 84% 46%, rgba(110,20,200,0.22), transparent 46%), radial-gradient(ellipse 400px 200px at 50% 88%, rgba(10,106,106,0.18), transparent 50%)"
+          : "radial-gradient(ellipse 560px 320px at 50% 0%, rgba(255,183,39,0.16), transparent 70%)";
 
     return (
       <div className={containerClass} style={containerStyle}>
         <div className="pointer-events-none absolute inset-0" style={{ background: glowBackground }} />
+        {isFuturista && <FuturistaArena />}
         {isHolofote && (
           <>
             <div

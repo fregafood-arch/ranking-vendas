@@ -20,7 +20,12 @@ export async function getActiveTheme(client?: SupabaseClient): Promise<AppTheme>
     .eq("key", "ui.theme")
     .maybeSingle();
 
-  if (data?.value === "game" || data?.value === "zoeira" || data?.value === "holofote") {
+  if (
+    data?.value === "game" ||
+    data?.value === "zoeira" ||
+    data?.value === "holofote" ||
+    data?.value === "futurista"
+  ) {
     return data.value;
   }
   return "default";

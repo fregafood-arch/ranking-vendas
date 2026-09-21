@@ -179,6 +179,46 @@ body {
 }
 
 /*
+ * Skin "Futurista": escudos flutuando num portal neon (item 8 do
+ * mapeamento de melhorias inspirado no concorrente, refinado com o usuário
+ * num mockup em Artifact antes de virar código).
+ */
+@keyframes futurista-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3.5%);
+  }
+}
+
+@keyframes futurista-grid-scroll {
+  to {
+    background-position: 0 46px;
+  }
+}
+
+@keyframes futurista-scan-move {
+  from {
+    background-position: 0 -100%;
+  }
+  to {
+    background-position: 0 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .futurista-float,
+  .futurista-ring,
+  .futurista-grid,
+  .futurista-scan,
+  .futurista-rays {
+    animation: none !important;
+  }
+}
+
+/*
  * Destaque de comemoração no Modo TV (ultrapassagem no ranking ou meta de
  * período batida): a mensagem entra com um "estouro" (escala além de 100%
  * e volta), chamando atenção sem depender do vídeo sozinho para comunicar
