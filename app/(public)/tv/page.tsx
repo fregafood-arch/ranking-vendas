@@ -261,10 +261,7 @@ export default async function TvModePage() {
 
   const announcementsSlide =
     announcements && announcements.length > 0 ? (
-      <div
-        className="relative flex h-full flex-col items-center gap-10 overflow-hidden px-16 py-10"
-        style={{ justifyContent: "safe center" }}
-      >
+      <div className="relative flex h-full flex-col items-center gap-4 overflow-hidden px-16 py-6">
         <div
           className="pointer-events-none absolute inset-0"
           style={{
@@ -274,28 +271,41 @@ export default async function TvModePage() {
           aria-hidden
         />
 
-        <div className="relative flex flex-col items-center gap-3 text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-600/15 text-4xl">
+        <div className="relative flex shrink-0 flex-col items-center gap-1 text-center">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-600/15 text-2xl">
             📋
           </span>
-          <h2 className="text-4xl font-black tracking-tight text-neutral-50">Avisos</h2>
-          <p className="text-lg text-neutral-500">Comunicados da equipe</p>
+          <h2 className="text-2xl font-black tracking-tight text-neutral-50">Avisos</h2>
+          <p className="text-sm text-neutral-500">Comunicados da equipe</p>
         </div>
 
-        <div className="relative flex w-full max-w-6xl flex-wrap justify-center gap-6">
+        <div
+          className="relative flex min-h-0 w-full max-w-6xl flex-1 flex-wrap content-center justify-center gap-5 overflow-hidden"
+          style={{
+            maskImage: "linear-gradient(to bottom, black 92%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(to bottom, black 92%, transparent 100%)",
+          }}
+        >
           {announcements.map((announcement, index) => {
             const accent = ANNOUNCEMENT_ACCENTS[index % ANNOUNCEMENT_ACCENTS.length];
+            const bodyLength = announcement.body.length;
+            const bodyTextClass =
+              bodyLength > 260
+                ? "text-sm leading-snug"
+                : bodyLength > 140
+                  ? "text-base leading-snug"
+                  : "text-lg leading-relaxed";
             return (
               <div
                 key={announcement.id}
-                className="w-full max-w-md overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900 shadow-lg shadow-black/40"
+                className="w-full max-w-lg overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900 shadow-lg shadow-black/40"
               >
                 <div className={`h-1.5 w-full ${accent.bar}`} aria-hidden />
-                <div className="space-y-3 p-7">
+                <div className="space-y-2 p-5">
                   {announcement.title && (
-                    <p className={`text-2xl font-bold ${accent.title}`}>{announcement.title}</p>
+                    <p className={`text-xl font-bold ${accent.title}`}>{announcement.title}</p>
                   )}
-                  <p className="text-xl leading-relaxed text-balance whitespace-pre-wrap text-neutral-200">
+                  <p className={`text-balance whitespace-pre-wrap text-neutral-200 ${bodyTextClass}`}>
                     {announcement.body}
                   </p>
                 </div>
