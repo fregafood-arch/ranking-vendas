@@ -280,8 +280,9 @@ export default async function TvModePage() {
         </div>
 
         <div
-          className="relative flex min-h-0 w-full max-w-6xl flex-1 flex-wrap content-center justify-center gap-5 overflow-hidden"
+          className="relative flex min-h-0 w-full max-w-6xl flex-1 flex-wrap justify-center gap-5 overflow-hidden"
           style={{
+            alignContent: "safe center",
             maskImage: "linear-gradient(to bottom, black 92%, transparent 100%)",
             WebkitMaskImage: "linear-gradient(to bottom, black 92%, transparent 100%)",
           }}
