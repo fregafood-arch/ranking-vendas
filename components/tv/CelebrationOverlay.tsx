@@ -21,6 +21,13 @@ const FALLBACK_MS: Record<CelebrationEvent["kind"], number> = {
  * mensagem em evidência. A fila garante que, se mais de um desses eventos
  * acontecer na mesma atualização, eles aparecem um de cada vez, nunca
  * empilhados.
+ *
+ * Os dois vídeos ficam SEMPRE montados (mesmo sem comemoração ativa), com
+ * preload="auto" e mudos -- numa Smart TV com o navegador embutido (mais
+ * lento e com memória mais curta que um computador), começar a baixar o
+ * arquivo só no instante exato da comemoração pode não dar tempo de
+ * bufferizar nada, e a tela fica preta atrás do card. Pré-carregando o
+ * tempo todo em segundo plano, o vídeo já está pronto quando precisar.
  */
 export function CelebrationOverlay({
   queue,
@@ -30,7 +37,8 @@ export function CelebrationOverlay({
   onAdvance: () => void;
 }) {
   const current = queue[0] ?? null;
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const overtakeVideoRef = useRef<HTMLVideoElement>(null);
+  const goalVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (!current) return;
@@ -41,7 +49,7 @@ export function CelebrationOverlay({
       onAdvance();
     };
 
-    const video = videoRef.current;
+    const video = current.kind === "overtake" ? overtakeVideoRef.current : goalVideoRef.current;
     if (video) {
       video.currentTime = 0;
       video.muted = false;
@@ -50,7 +58,7 @@ export function CelebrationOverlay({
         // interação humana na página) -- toca mudo em vez de não tocar
         // nada. Mudo é sempre permitido, então o vídeo pelo menos aparece;
         // o som volta a funcionar sozinho assim que a página receber
-        // qualquer clique/toque (ver listener global em TVModeClient).
+        // qualquer clique/toque.
         video.muted = true;
         video.play().catch(() => {});
       });
@@ -63,44 +71,60 @@ export function CelebrationOverlay({
     return () => {
       video?.removeEventListener("ended", advanceOnce);
       clearTimeout(fallbackTimer);
+      if (video) video.pause();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.key]);
 
-  if (!current) return null;
-
-  const videoSrc = current.kind === "overtake" ? "/video/overtake.mp4" : "/video/goal-achieved.mp4";
-
   return (
-    <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+    <div className="pointer-events-none fixed inset-0 z-50">
       <video
-        key={videoSrc}
-        ref={videoRef}
-        src={videoSrc}
+        ref={overtakeVideoRef}
+        src="/video/overtake.mp4"
+        preload="auto"
+        muted
         playsInline
-        className="absolute inset-0 h-full w-full object-cover opacity-90"
+        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
+          current?.kind === "overtake" ? "opacity-90" : "opacity-0"
+        }`}
         aria-hidden
       />
-      <div
-        key={current.key}
-        className="celebration-pop-in relative z-10 rounded-2xl border border-amber-400/40 bg-black/60 px-12 py-8 text-center shadow-[0_0_60px_rgba(0,0,0,0.6)] backdrop-blur-sm"
-      >
-        {current.kind === "overtake" ? (
-          <>
-            <p className="text-xl font-bold tracking-widest text-amber-300">ULTRAPASSAGEM!</p>
-            <p className="mt-2 text-6xl font-black text-white drop-shadow-lg">{current.name}</p>
-            <p className="mt-2 text-3xl font-bold text-emerald-400">Novo {current.rank}º lugar!</p>
-          </>
-        ) : (
-          <>
-            <p className="text-xl font-bold tracking-widest text-emerald-300">META BATIDA!</p>
-            <p className="mt-2 text-5xl font-black text-white drop-shadow-lg">
-              Atingimos a meta {current.periodLabel}
-            </p>
-            <p className="mt-2 text-3xl font-bold text-amber-400">Parabéns a todos! 🎉</p>
-          </>
-        )}
-      </div>
+      <video
+        ref={goalVideoRef}
+        src="/video/goal-achieved.mp4"
+        preload="auto"
+        muted
+        playsInline
+        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
+          current?.kind === "goal" ? "opacity-90" : "opacity-0"
+        }`}
+        aria-hidden
+      />
+
+      {current && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+          <div
+            key={current.key}
+            className="celebration-pop-in relative z-10 rounded-2xl border border-amber-400/40 bg-black/60 px-12 py-8 text-center shadow-[0_0_60px_rgba(0,0,0,0.6)] backdrop-blur-sm"
+          >
+            {current.kind === "overtake" ? (
+              <>
+                <p className="text-xl font-bold tracking-widest text-amber-300">ULTRAPASSAGEM!</p>
+                <p className="mt-2 text-6xl font-black text-white drop-shadow-lg">{current.name}</p>
+                <p className="mt-2 text-3xl font-bold text-emerald-400">Novo {current.rank}º lugar!</p>
+              </>
+            ) : (
+              <>
+                <p className="text-xl font-bold tracking-widest text-emerald-300">META BATIDA!</p>
+                <p className="mt-2 text-5xl font-black text-white drop-shadow-lg">
+                  Atingimos a meta {current.periodLabel}
+                </p>
+                <p className="mt-2 text-3xl font-bold text-amber-400">Parabéns a todos! 🎉</p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
