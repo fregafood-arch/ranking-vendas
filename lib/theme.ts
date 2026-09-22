@@ -24,7 +24,8 @@ export async function getActiveTheme(client?: SupabaseClient): Promise<AppTheme>
     data?.value === "game" ||
     data?.value === "zoeira" ||
     data?.value === "holofote" ||
-    data?.value === "futurista"
+    data?.value === "futurista" ||
+    data?.value === "clash"
   ) {
     return data.value;
   }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { SellerAvatar } from "@/components/sellers/SellerAvatar";
+import { ClashArenaBackground } from "@/components/ranking/ClashArenaBackground";
 import type { AppTheme } from "@/lib/theme-types";
 
 export type PodiumEntry = {
@@ -1045,6 +1046,170 @@ function FuturistaArena() {
   );
 }
 
+// ============================================================================
+// Tema "clash" ("Arena Real") — torres medievais (arte fornecida pelo
+// usuário) fixas num campo gramado animado, com foto do vendedor flutuando
+// acima da torre e nome/resultado numa placa cravada (rebites nos cantos)
+// abaixo dela. Validado com o usuário num mockup em Artifact -- inclusive
+// duas rodadas de ajuste (torres fixas em vez de flutuando + sombra neon
+// pra profundidade, depois placas com rebites e texto maior) -- antes de
+// virar este componente.
+// ============================================================================
+
+const CLASH_STYLES: Record<1 | 2 | 3, { pedestal: string; accent: string; accentSoft: string; neon: string }> = {
+  1: { pedestal: "/podium/pedestal-gold.webp", accent: "#c9832a", accentSoft: "#f4c542", neon: "#f4c54270" },
+  2: { pedestal: "/podium/pedestal-silver.webp", accent: "#6f83a6", accentSoft: "#dbe6f5", neon: "#8fc2ff5c" },
+  3: { pedestal: "/podium/pedestal-red.webp", accent: "#b23030", accentSoft: "#ffb0a8", neon: "#ff5a5a5c" },
+};
+
+function PodiumColumnClash({
+  entry,
+  rank,
+  profileHref,
+  large,
+}: {
+  entry: PodiumEntry;
+  rank: 1 | 2 | 3;
+  profileHref: string;
+  large?: boolean;
+}) {
+  const style = CLASH_STYLES[rank];
+  const isChampion = rank === 1;
+  const vpMax = large ? 2000 : 2200;
+  const vhMax = 1080;
+
+  const colWidth = large
+    ? { 1: fluid(200, 340, vpMax), 2: fluid(152, 258, vpMax), 3: fluid(140, 236, vpMax) }[rank]
+    : { 1: fluid(146, 236, vpMax), 2: fluid(112, 184, vpMax), 3: fluid(104, 168, vpMax) }[rank];
+
+  const nameSize = large ? fluidWH(12, 18, vpMax, vhMax) : fluid(10, 14, vpMax);
+  const resultSize = large ? fluidWH(13, 20, vpMax, vhMax) : fluid(11, 16, vpMax);
+
+  const depthStyle: CSSProperties =
+    rank === 2
+      ? { transform: "translateY(4%)", filter: "brightness(0.94) blur(0.3px)" }
+      : rank === 3
+        ? { transform: "translateY(8%)", filter: "brightness(0.86) blur(0.5px)" }
+        : {};
+
+  return (
+    <div
+      className="relative flex flex-col items-center"
+      style={{ width: colWidth, zIndex: isChampion ? 3 : rank, ...depthStyle }}
+    >
+      <div className="relative w-full">
+        <div
+          className="pointer-events-none absolute bottom-[-9%] left-1/2 -z-20 -translate-x-1/2 rounded-full"
+          style={{ width: "78%", aspectRatio: "4 / 1", background: "radial-gradient(ellipse, rgba(0,0,0,0.55) 0%, transparent 75%)" }}
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute bottom-[-6%] left-1/2 -z-10 -translate-x-1/2 rounded-full blur-[2px]"
+          style={{
+            width: "92%",
+            aspectRatio: "3.2 / 1",
+            background: `radial-gradient(ellipse, ${style.neon} 0%, transparent 72%)`,
+            opacity: 0.8,
+          }}
+          aria-hidden
+        />
+
+        {isChampion && (
+          <div
+            className="pointer-events-none absolute top-[10%] left-1/2"
+            style={{
+              width: "150%",
+              aspectRatio: "1",
+              transform: "translate(-50%, -50%)",
+              background: "repeating-conic-gradient(from 0deg, #fff2c029 0deg 3deg, transparent 3deg 17deg)",
+              WebkitMask: "radial-gradient(circle, #000 0%, #000 18%, transparent 62%)",
+              mask: "radial-gradient(circle, #000 0%, #000 18%, transparent 62%)",
+              opacity: 0.6,
+              animation: "holofote-starburst-spin 90s linear infinite",
+            }}
+            aria-hidden
+          />
+        )}
+
+        <div
+          className="absolute flex items-center justify-center overflow-hidden rounded-full"
+          style={{
+            left: "50%",
+            top: "-15%",
+            width: "34%",
+            aspectRatio: "1",
+            transform: "translateX(-50%)",
+            background: "#1a2740",
+            boxShadow: `0 0 0 3px ${style.accentSoft}, 0 0 16px ${style.neon}`,
+          }}
+        >
+          <Link href={profileHref} className="absolute inset-0 block overflow-hidden rounded-full">
+            <SellerAvatar photoPath={entry.photoPath} name={entry.name} size="100%" />
+          </Link>
+        </div>
+
+        <img
+          src={style.pedestal}
+          alt=""
+          draggable={false}
+          className="block w-full h-auto select-none"
+          style={{
+            filter: `drop-shadow(0 16px 16px rgba(0,0,0,0.55)) drop-shadow(0 0 22px ${style.neon}) drop-shadow(0 0 44px ${style.neon})`,
+          }}
+        />
+      </div>
+
+      <div
+        className="relative mt-[7%] flex max-w-full flex-col items-center gap-0.5"
+        style={{
+          padding: "11px 28px 10px",
+          borderRadius: 5,
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.09), transparent 35%), linear-gradient(180deg, #2e1d10, #1a1109 55%, #100a06)",
+          boxShadow: `0 0 0 1px #000000cc, 0 0 0 3px ${style.accentSoft}, 0 0 0 4px #00000080, inset 0 2px 0 rgba(255,255,255,0.14), inset 0 -3px 5px rgba(0,0,0,0.55), 0 6px 10px -4px rgba(0,0,0,0.6), 0 0 14px ${style.neon}`,
+        }}
+      >
+        {(["tl", "tr", "bl", "br"] as const).map((corner) => (
+          <span
+            key={corner}
+            aria-hidden
+            className="absolute h-1.5 w-1.5 rounded-full"
+            style={{
+              [corner.includes("t") ? "top" : "bottom"]: 5,
+              [corner.includes("l") ? "left" : "right"]: 5,
+              background: `radial-gradient(circle at 35% 30%, #fff6d8, ${style.accentSoft} 55%, #5c3f0e 100%)`,
+              boxShadow: `0 1px 1px rgba(0,0,0,0.7), 0 0 3px ${style.neon}`,
+            }}
+          />
+        ))}
+        <Link
+          href={profileHref}
+          className="block max-w-full truncate font-bold hover:opacity-80"
+          style={{
+            fontFamily: "var(--font-clash-display)",
+            fontSize: nameSize,
+            color: "#f1e6cf",
+            textShadow: "0 1px 0 rgba(0,0,0,0.85), 0 -1px 0 rgba(255,255,255,0.05)",
+          }}
+        >
+          {entry.name}
+        </Link>
+        <p
+          className="font-bold whitespace-nowrap"
+          style={{
+            fontFamily: "var(--font-clash-body)",
+            fontSize: resultSize,
+            color: style.accentSoft,
+            textShadow: `0 1px 0 rgba(0,0,0,0.85), 0 0 6px ${style.neon}`,
+          }}
+        >
+          {entry.resultLabel}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function Podium({
   entries,
   periodId,
@@ -1069,7 +1234,8 @@ export function Podium({
   const isZoeira = theme === "zoeira";
   const isHolofote = theme === "holofote";
   const isFuturista = theme === "futurista";
-  const isFancy = isGame || isZoeira || isHolofote || isFuturista;
+  const isClash = theme === "clash";
+  const isFancy = isGame || isZoeira || isHolofote || isFuturista || isClash;
 
   const PodiumColumn = isGame
     ? PodiumColumnGame
@@ -1079,7 +1245,9 @@ export function Podium({
         ? PodiumColumnHolofote
         : isFuturista
           ? PodiumColumnFuturista
-          : PodiumColumnDefault;
+          : isClash
+            ? PodiumColumnClash
+            : PodiumColumnDefault;
   const spacerClass = large ? "w-48 sm:w-56" : "w-28 sm:w-36";
   const fancyVpMax = large ? 2000 : 2200;
   const fancyVhMax = 1080;
@@ -1112,13 +1280,15 @@ export function Podium({
           ? "bg-[#0c0716]"
           : isFuturista
             ? "bg-[#030611]"
-            : "bg-[#0b1130]"
+            : isClash
+              ? "bg-[#142c48]"
+              : "bg-[#0b1130]"
     }`;
     const containerStyle = {
       paddingLeft: large ? fluid(32, 58, fancyVpMax) : fluid(20, 44, fancyVpMax),
       paddingRight: large ? fluid(32, 58, fancyVpMax) : fluid(20, 44, fancyVpMax),
       paddingTop:
-        isZoeira || isHolofote || isFuturista
+        isZoeira || isHolofote || isFuturista || isClash
           ? large
             ? fluidWH(16, 24, fancyVpMax, fancyVhMax)
             : fluid(16, 28, fancyVpMax)
@@ -1133,10 +1303,13 @@ export function Podium({
         ? "radial-gradient(ellipse 340px 300px at 18% 70%, rgba(255,61,129,0.14), transparent 65%), radial-gradient(ellipse 340px 300px at 82% 70%, rgba(155,123,255,0.14), transparent 65%), radial-gradient(ellipse 520px 340px at 50% 10%, rgba(255,209,102,0.18), transparent 70%)"
         : isFuturista
           ? "radial-gradient(ellipse 300px 220px at 18% 60%, rgba(10,79,176,0.20), transparent 46%), radial-gradient(ellipse 300px 220px at 84% 46%, rgba(110,20,200,0.22), transparent 46%), radial-gradient(ellipse 400px 200px at 50% 88%, rgba(10,106,106,0.18), transparent 50%)"
-          : "radial-gradient(ellipse 560px 320px at 50% 0%, rgba(255,183,39,0.16), transparent 70%)";
+          : isClash
+            ? "none"
+            : "radial-gradient(ellipse 560px 320px at 50% 0%, rgba(255,183,39,0.16), transparent 70%)";
 
     return (
       <div className={containerClass} style={containerStyle}>
+        {isClash && <ClashArenaBackground />}
         <div className="pointer-events-none absolute inset-0" style={{ background: glowBackground }} />
         {isFuturista && <FuturistaArena />}
         {isHolofote && (
