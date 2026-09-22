@@ -1287,8 +1287,15 @@ export function Podium({
     const containerStyle = {
       paddingLeft: large ? fluid(32, 58, fancyVpMax) : fluid(20, 44, fancyVpMax),
       paddingRight: large ? fluid(32, 58, fancyVpMax) : fluid(20, 44, fancyVpMax),
-      paddingTop:
-        isZoeira || isHolofote || isFuturista || isClash
+      paddingTop: isClash
+        ? // O avatar da skin "Arena Real" flutua ACIMA da torre (top:-15% do
+          // próprio pedestal), diferente do círculo embutido nas outras
+          // skins -- a torre do 1º lugar é a mais alta, então precisa de
+          // bem mais respiro no topo pra não cortar a foto.
+          large
+          ? fluidWH(56, 96, fancyVpMax, fancyVhMax)
+          : fluid(48, 80, fancyVpMax)
+        : isZoeira || isHolofote || isFuturista
           ? large
             ? fluidWH(16, 24, fancyVpMax, fancyVhMax)
             : fluid(16, 28, fancyVpMax)
