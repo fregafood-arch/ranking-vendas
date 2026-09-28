@@ -39,6 +39,7 @@ export default async function RankingByIndicatorPage({
 
   const defaultPeriodId = periods.find((period) => period.is_active)?.id ?? periods[0].id;
   const periodId = periodIdParam ?? defaultPeriodId;
+  const visiblePeriods = periods.filter((period) => period.is_active || period.id === periodId);
 
   const [attainment, { data: sellers }] = await Promise.all([
     getIndicatorAttainment(periodId),
@@ -67,7 +68,7 @@ export default async function RankingByIndicatorPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-xl font-semibold text-neutral-50">Ranking — {indicator.name}</h1>
-        <PeriodPicker periods={periods} selectedId={periodId} basePath={`/ranking/${indicatorId}`} />
+        <PeriodPicker periods={visiblePeriods} selectedId={periodId} basePath={`/ranking/${indicatorId}`} />
       </div>
 
       <IndicatorFilterTabs

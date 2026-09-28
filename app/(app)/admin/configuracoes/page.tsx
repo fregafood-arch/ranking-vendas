@@ -36,6 +36,7 @@ export default async function AdminSettingsPage({
 
   const defaultPeriodId = periods.find((period) => period.is_active)?.id ?? periods[0].id;
   const periodId = periodIdParam ?? defaultPeriodId;
+  const visiblePeriods = periods.filter((period) => period.is_active || period.id === periodId);
 
   const [{ data: indicators }, { data: rankingRules }, { data: tieBreakRules }] = await Promise.all([
     supabase.from("indicators").select("id, name, unit").eq("is_active", true).order("name"),
@@ -78,7 +79,7 @@ export default async function AdminSettingsPage({
             Pesos padrão, teto de atingimento e ordem de desempate do Ranking Geral.
           </p>
         </div>
-        <PeriodPicker periods={periods} selectedId={periodId} basePath="/admin/configuracoes" />
+        <PeriodPicker periods={visiblePeriods} selectedId={periodId} basePath="/admin/configuracoes" />
       </div>
 
       <section className="space-y-3">

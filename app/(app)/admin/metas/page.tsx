@@ -32,6 +32,7 @@ export default async function AdminGoalsPage({
 
   const defaultPeriodId = periods.find((period) => period.is_active)?.id ?? periods[0].id;
   const periodId = periodIdParam ?? defaultPeriodId;
+  const visiblePeriods = periods.filter((period) => period.is_active || period.id === periodId);
 
   const [{ data: indicators }, { data: sellers }, { data: teams }, { data: teamGoals }] = await Promise.all([
     supabase.from("indicators").select("id, name, unit").eq("is_active", true).order("name"),
@@ -63,7 +64,7 @@ export default async function AdminGoalsPage({
     <div className="space-y-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-xl font-semibold text-neutral-50">Metas</h1>
-        <PeriodPicker periods={periods} selectedId={periodId} basePath="/admin/metas" />
+        <PeriodPicker periods={visiblePeriods} selectedId={periodId} basePath="/admin/metas" />
       </div>
 
       {!indicators?.length ? (

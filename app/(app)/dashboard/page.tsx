@@ -31,6 +31,7 @@ export default async function DashboardPage({
   const defaultPeriodId = periods.find((period) => period.is_active)?.id ?? periods[0].id;
   const periodId = periodIdParam ?? defaultPeriodId;
   const period = periods.find((candidate) => candidate.id === periodId) ?? periods[0];
+  const visiblePeriods = periods.filter((candidate) => candidate.is_active || candidate.id === periodId);
 
   const [
     { data: indicators },
@@ -248,7 +249,7 @@ export default async function DashboardPage({
     <div className="space-y-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-bold tracking-tight text-neutral-50">Dashboard</h1>
-        <PeriodPicker periods={periods} selectedId={periodId} basePath="/dashboard" />
+        <PeriodPicker periods={visiblePeriods} selectedId={periodId} basePath="/dashboard" />
       </div>
 
       {teamGoalGroups.size > 0 &&

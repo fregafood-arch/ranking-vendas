@@ -36,6 +36,10 @@ export default async function RankingPage({
 
   const defaultPeriodId = periods.find((period) => period.is_active)?.id ?? periods[0].id;
   const periodId = periodIdParam ?? defaultPeriodId;
+  // Períodos inativos ficam fora do seletor -- exceto o selecionado no
+  // momento, pra não sumir da tela se um admin inativar o período que
+  // alguém está olhando.
+  const visiblePeriods = periods.filter((period) => period.is_active || period.id === periodId);
 
   const { data: indicators } = await supabase
     .from("indicators")
@@ -92,7 +96,7 @@ export default async function RankingPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-bold tracking-tight text-neutral-50">Ranking Geral</h1>
-        <PeriodPicker periods={periods} selectedId={periodId} basePath="/ranking" />
+        <PeriodPicker periods={visiblePeriods} selectedId={periodId} basePath="/ranking" />
       </div>
 
       <IndicatorFilterTabs indicators={indicators ?? []} activeIndicatorId={null} periodId={periodId} />
